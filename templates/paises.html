@@ -34,6 +34,7 @@
               <th>Operadora</th>
               <th>Tecnologia</th>
               <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -46,6 +47,10 @@
                     <td class="align-middle">{{pais["tecnologia"]}}</td>
                     <td><form action="/deletar/{{pais['codigo']}}" method="post" onsubmit="return confirm('Tem certeza que deseja excluir?');">
                         <button class="btn btn-danger" type="submit">Deletar</button>
+                        </form>
+                    </td>
+                    <td><form action="/atualizar/{{pais['codigo']}}" method="get">
+                        <button class="btn btn-primary" type="submit">Atualizar</button>
                         </form>
                     </td>
                </tr>
