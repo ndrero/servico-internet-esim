@@ -27,6 +27,9 @@ def cadastrar_pais():
         "tecnologia" : request.form["tecnologia"]
     }
 
+    if pais["codigo"] in paises.keys():
+        return "Esse país já foi cadastrado", 400
+    
     paises[pais["codigo"]] = pais
     json_write(paises, "paises.json")
     
