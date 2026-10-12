@@ -38,7 +38,7 @@ def cadastrar_pais():
 @app.route("/atualizar/<pais_id>", methods = ["GET", "POST"])
 def atualizar_pais(pais_id):
     if pais_id not in paises:
-        return {"erro": "País não encontrado"}, 404
+        return "País não encontrado", 404
 
     pais_atual = paises[pais_id]
 
@@ -59,7 +59,7 @@ def atualizar_pais(pais_id):
 def informacoes_por_codigo(pais_id):
     if pais_id in paises:
         return paises[pais_id]
-    return {"erro" : "Código não encontrado"}, 404
+    return "Código não encontrado", 404
 
 @app.route("/deletar/<pais_id>", methods = ["POST"])
 def deletar_por_codigo(pais_id):
@@ -70,7 +70,7 @@ def deletar_por_codigo(pais_id):
 
         return redirect("/paises")
     
-    return {"erro" : "Código não encontrado"}, 404
+    return "Código não encontrado", 404
 
 
 if __name__ == "__main__":
