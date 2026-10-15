@@ -1,9 +1,9 @@
 {
     "BR": {
         "codigo": "BR",
-        "pais": "BRASIL",
-        "regiao": "America do Sul",
-        "operadora": "Tim",
-        "tecnologia": "5G"
+        "pais": "Brasil",
+        "regiao": "america do sul",
+        "operadora": "claro",
+        "tecnologia": "5g"
     }
 }
