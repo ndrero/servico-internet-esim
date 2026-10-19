@@ -55,6 +55,12 @@ def atualizar_pais(pais_id):
     
     return render_template("atualizar.html", pais=pais_atual)
 
+@app.route("/buscar")
+def buscar_pais():
+    codigo = request.args.get("codigo", "").strip()
+    pais = paises.get(codigo) if codigo else None
+    return render_template("buscar.html", codigo=codigo, pais=pais)
+
 @app.route("/buscar/<pais_id>")
 def informacoes_por_codigo(pais_id):
     if pais_id in paises:
