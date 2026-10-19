@@ -1,9 +1,9 @@
 {
-    "lala": {
-        "codigo": "lala",
-        "pais": "Brasik",
-        "regiao": "Ásia",
-        "operadora": "Sil vous plaieeee",
-        "tecnologia": "5G"
+    "BR": {
+        "codigo": "BR",
+        "pais": "Brasil",
+        "regiao": "america do sul",
+        "operadora": "claro",
+        "tecnologia": "5g"
     }
 }
