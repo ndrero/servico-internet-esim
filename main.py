@@ -8,6 +8,10 @@ paises = json_read("paises.json")
 
 @app.route("/")
 def home():
+    return render_template("inicio.html")
+
+@app.route("/cadastro")
+def pagina_cadastro():
     return render_template("cadastro.html")
 
 @app.route("/paises")
