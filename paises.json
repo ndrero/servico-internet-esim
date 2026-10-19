@@ -5,5 +5,12 @@
         "regiao": "America do sul",
         "operadora": "claro",
         "tecnologia": "5g"
+    },
+    "KR": {
+        "codigo": "KR",
+        "pais": "Coreia",
+        "regiao": "Ásia",
+        "operadora": "KT",
+        "tecnologia": "5G"
     }
 }
