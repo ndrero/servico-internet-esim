@@ -27,47 +27,39 @@ def cadastrar_pais():
         "tecnologia" : request.form["tecnologia"]
     }
 
+    if pais["codigo"] in paises.keys():
+        return "Esse país já foi cadastrado", 400
+    
     paises[pais["codigo"]] = pais
     json_write(paises, "paises.json")
     
     return redirect("/paises")
 
-@app.route("/atualizar/<pais_id>", methods = ["PUT"])
+@app.route("/atualizar/<pais_id>", methods = ["GET", "POST"])
 def atualizar_pais(pais_id):
-    dados = request.get_json(silent=True)
-    if not dados:
-        return {"erro": "Envie um JSON"}, 400
-
     if pais_id not in paises:
-        return {"erro": "País não encontrado"}, 404
-    
-    pais = {
-        "codigo" : dados.get("codigo"),
-        "pais" : dados.get("pais"),
-        "regiao" : dados.get("regiao"),
-        "operadora" : dados.get("operadora"),
-        "tecnologia" : dados.get("tecnologia")
-    }
+        return "País não encontrado", 404
 
     pais_atual = paises[pais_id]
-    pais_atual["codigo"] = dados.get("codigo", pais_atual["codigo"]) 
-    pais_atual["pais"] = dados.get("pais", pais_atual["pais"]) 
-    pais_atual["regiao"] = dados.get("regiao", pais_atual["regiao"]) 
-    pais_atual["operadora"] = dados.get("operadora", pais_atual["operadora"]) 
-    pais_atual["tecnologia"] = dados.get("tecnologia", pais_atual["tecnologia"]) 
 
-    paises[pais_id] = pais_atual
-    json_write(paises, "paises.json")
+    if request.method == 'POST':
+        pais_atual["codigo"] = request.form["codigo"]
+        pais_atual["pais"] = request.form["pais"]
+        pais_atual["regiao"] = request.form["regiao"]
+        pais_atual["operadora"] = request.form["operadora"]
+        pais_atual["tecnologia"] = request.form["tecnologia"]
 
-    return {"message" : "País atualizado com sucesso", 
-            "dados": pais_atual
-            }, 200
+        json_write(paises, "paises.json")
+
+        return redirect("/paises")
+    
+    return render_template("atualizar.html", pais=pais_atual)
 
 @app.route("/buscar/<pais_id>")
 def informacoes_por_codigo(pais_id):
     if pais_id in paises:
         return paises[pais_id]
-    return {"erro" : "Código não encontrado"}, 404
+    return "Código não encontrado", 404
 
 @app.route("/deletar/<pais_id>", methods = ["POST"])
 def deletar_por_codigo(pais_id):
@@ -78,7 +70,7 @@ def deletar_por_codigo(pais_id):
 
         return redirect("/paises")
     
-    return {"erro" : "Código não encontrado"}, 404
+    return "Código não encontrado", 404
 
 
 if __name__ == "__main__":

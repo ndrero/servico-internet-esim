@@ -21,7 +21,9 @@ body{background:#1f6fb8}
 .tbl-wrap{overflow-x:auto}
 .tbl-wrap table{width:100%;min-width:600px}
 td form{margin:0}
-td:last-child{text-align:right;white-space:nowrap}
+td:last-child{text-align:right;white-space:nowrap;overflow:visible}
+th:last-child{width:190px}
+td:last-child form{display:inline}
 .empty td{text-align:center;font-style:italic}
 .taskbar{position:fixed;left:0;right:0;bottom:0;z-index:5;height:40px;padding:0 8px;display:flex;align-items:center;gap:8px;
  background:linear-gradient(to bottom,rgba(150,190,225,.55),rgba(30,60,100,.75) 50%,rgba(10,25,50,.85));border-top:1px solid rgba(255,255,255,.55)}
@@ -90,6 +92,9 @@ td:last-child{text-align:right;white-space:nowrap}
               <td>{{ pais["operadora"] }}</td>
               <td>{{ pais["tecnologia"] }}</td>
               <td>
+                <form action="/atualizar/{{ pais['codigo'] }}" method="get">
+                  <button type="submit">Atualizar</button>
+                </form>
                 <form action="/deletar/{{ pais['codigo'] }}" method="post" onsubmit="return confirm('Tem certeza que deseja excluir?');">
                   <button type="submit">Deletar</button>
                 </form>
