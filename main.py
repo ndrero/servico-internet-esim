@@ -7,7 +7,7 @@ paises = json_read("paises.json")
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("cadastro.html")
 
 @app.route("/paises")
 def listar_paises():
