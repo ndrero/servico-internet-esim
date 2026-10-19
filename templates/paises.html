@@ -84,7 +84,7 @@ td:last-child form{display:inline}
             <tr><th>Código</th><th>Nome</th><th>Região</th><th>Operadora</th><th>Tecnologia</th><th></th></tr>
           </thead>
           <tbody>
-          {% for pais in paises.values() %}
+          {% for pais in paises %}
             <tr>
               <td>{{ pais["codigo"] }}</td>
               <td>{{ pais["pais"] }}</td>
@@ -118,6 +118,7 @@ td:last-child form{display:inline}
   <a class="tb" href="/"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-doc"/></svg> Cadastro</a>
   <a class="tb on" href="/paises"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-globe"/></svg> Países</a>
   <a class="tb" href="/buscar"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-doc"/></svg> Buscar</a>
+  <a class="tb" href="/estatisticas"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-globe"/></svg> Estatísticas</a>
 </div>
 </body>
 </html>

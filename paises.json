@@ -2,9 +2,114 @@
     "BR": {
         "codigo": "BR",
         "pais": "Brasil",
-        "regiao": "America do sul",
-        "operadora": "claro",
-        "tecnologia": "5g"
+        "regiao": "América do Sul",
+        "operadora": "Claro",
+        "tecnologia": "5G"
+    },
+    "AR": {
+        "codigo": "AR",
+        "pais": "Argentina",
+        "regiao": "América do Sul",
+        "operadora": "Personal",
+        "tecnologia": "4G"
+    },
+    "CL": {
+        "codigo": "CL",
+        "pais": "Chile",
+        "regiao": "América do Sul",
+        "operadora": "Entel",
+        "tecnologia": "5G"
+    },
+    "PE": {
+        "codigo": "PE",
+        "pais": "Peru",
+        "regiao": "América do Sul",
+        "operadora": "Movistar",
+        "tecnologia": "4G"
+    },
+    "US": {
+        "codigo": "US",
+        "pais": "Estados Unidos",
+        "regiao": "América do Norte",
+        "operadora": "T-Mobile",
+        "tecnologia": "5G"
+    },
+    "CA": {
+        "codigo": "CA",
+        "pais": "Canadá",
+        "regiao": "América do Norte",
+        "operadora": "Rogers",
+        "tecnologia": "5G"
+    },
+    "MX": {
+        "codigo": "MX",
+        "pais": "México",
+        "regiao": "América do Norte",
+        "operadora": "Telcel",
+        "tecnologia": "5G"
+    },
+    "PT": {
+        "codigo": "PT",
+        "pais": "Portugal",
+        "regiao": "Europa",
+        "operadora": "MEO",
+        "tecnologia": "5G"
+    },
+    "ES": {
+        "codigo": "ES",
+        "pais": "Espanha",
+        "regiao": "Europa",
+        "operadora": "Movistar",
+        "tecnologia": "5G"
+    },
+    "FR": {
+        "codigo": "FR",
+        "pais": "França",
+        "regiao": "Europa",
+        "operadora": "Orange",
+        "tecnologia": "5G"
+    },
+    "IT": {
+        "codigo": "IT",
+        "pais": "Itália",
+        "regiao": "Europa",
+        "operadora": "TIM",
+        "tecnologia": "5G"
+    },
+    "DE": {
+        "codigo": "DE",
+        "pais": "Alemanha",
+        "regiao": "Europa",
+        "operadora": "Vodafone",
+        "tecnologia": "5G"
+    },
+    "GB": {
+        "codigo": "GB",
+        "pais": "Reino Unido",
+        "regiao": "Europa",
+        "operadora": "EE",
+        "tecnologia": "5G"
+    },
+    "NL": {
+        "codigo": "NL",
+        "pais": "Holanda",
+        "regiao": "Europa",
+        "operadora": "KPN",
+        "tecnologia": "5G"
+    },
+    "GR": {
+        "codigo": "GR",
+        "pais": "Grécia",
+        "regiao": "Europa",
+        "operadora": "Cosmote",
+        "tecnologia": "4G"
+    },
+    "JP": {
+        "codigo": "JP",
+        "pais": "Japão",
+        "regiao": "Ásia",
+        "operadora": "NTT Docomo",
+        "tecnologia": "5G"
     },
     "KR": {
         "codigo": "KR",
@@ -12,5 +117,40 @@
         "regiao": "Ásia",
         "operadora": "KT",
         "tecnologia": "5G"
+    },
+    "CN": {
+        "codigo": "CN",
+        "pais": "China",
+        "regiao": "Ásia",
+        "operadora": "China Mobile",
+        "tecnologia": "5G"
+    },
+    "TH": {
+        "codigo": "TH",
+        "pais": "Tailândia",
+        "regiao": "Ásia",
+        "operadora": "AIS",
+        "tecnologia": "4G"
+    },
+    "AU": {
+        "codigo": "AU",
+        "pais": "Austrália",
+        "regiao": "Oceania",
+        "operadora": "Telstra",
+        "tecnologia": "5G"
+    },
+    "ZA": {
+        "codigo": "ZA",
+        "pais": "África do Sul",
+        "regiao": "África",
+        "operadora": "Vodacom",
+        "tecnologia": "4G"
+    },
+    "EG": {
+        "codigo": "EG",
+        "pais": "Egito",
+        "regiao": "África",
+        "operadora": "Orange",
+        "tecnologia": "4G"
     }
 }
