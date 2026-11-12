@@ -1,11 +1,4 @@
 {
-    "BR": {
-        "codigo": "BR",
-        "pais": "Brasil",
-        "regiao": "América do Sul",
-        "operadora": "Claro",
-        "tecnologia": "5G"
-    },
     "AR": {
         "codigo": "AR",
         "pais": "Argentina",
@@ -152,5 +145,12 @@
         "regiao": "África",
         "operadora": "Orange",
         "tecnologia": "4G"
+    },
+    "BR": {
+        "codigo": "BR",
+        "pais": "Brasil",
+        "regiao": "América do Sul",
+        "operadora": "Tim",
+        "tecnologia": "5G"
     }
 }

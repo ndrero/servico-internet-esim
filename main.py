@@ -1,14 +1,20 @@
 from flask import Flask, render_template, redirect, request
 from json_handler import json_read, json_write
 from instrumentacao import agora, registrar, estatisticas
+from clientes import carregar_clientes, salvar_clientes, CAMPOS_CLIENTE
 
 app = Flask(__name__)
 
 paises = json_read("paises.json")
+clientes = carregar_clientes()
 
 @app.route("/")
 def home():
-    return render_template("inicio.html")
+    return render_template(
+        "inicio.html",
+        niveis=clientes.niveis(),
+        total_clientes=len(clientes.listar())
+        )
 
 @app.route("/cadastro")
 def pagina_cadastro():
@@ -111,6 +117,38 @@ def pagina_estatisticas():
         estatisticas=estatisticas,
         total_registros=len(paises)
         )
+
+
+# ---------------- Clientes (Árvore B) ----------------
+
+@app.route("/clientes")
+def pagina_clientes():
+    cpf = request.args.get("cpf", "").strip()
+    encontrado = None
+    if cpf:
+        encontrado = clientes.pesquisar(cpf)
+
+    return render_template(
+        "clientes.html",
+        clientes=clientes.listar(),
+        cpf=cpf,
+        encontrado=encontrado,
+        altura=len(clientes.niveis())
+        )
+
+@app.route("/clientes/cadastrar", methods = ["POST"])
+def cadastrar_cliente():
+    cliente = {campo: request.form.get(campo, "").strip() for campo in CAMPOS_CLIENTE}
+
+    if not cliente["cpf"] or not cliente["nome"]:
+        return "CPF e nome são obrigatórios", 400
+    if clientes.pesquisar(cliente["cpf"]) is not None:
+        return "Esse cliente já foi cadastrado", 400
+
+    clientes.inserir(cliente["cpf"], cliente)
+    salvar_clientes(clientes)
+
+    return redirect("/clientes")
 
 
 if __name__ == "__main__":
