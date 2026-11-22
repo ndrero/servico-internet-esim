@@ -2,11 +2,14 @@ from flask import Flask, render_template, redirect, request
 from json_handler import json_read, json_write
 from instrumentacao import agora, registrar, estatisticas
 from clientes import carregar_clientes, salvar_clientes, CAMPOS_CLIENTE
+from pacotes import carregar_pacotes
+from roteiro import ler_destinos, gerar_relatorio
 
 app = Flask(__name__)
 
 paises = json_read("paises.json")
 clientes = carregar_clientes()
+pacotes = carregar_pacotes()
 
 @app.route("/")
 def home():
@@ -133,6 +136,7 @@ def pagina_clientes():
         clientes=clientes.listar(),
         cpf=cpf,
         encontrado=encontrado,
+        pacotes=pacotes.listar(),
         altura=len(clientes.niveis())
         )
 
@@ -149,6 +153,34 @@ def cadastrar_cliente():
     salvar_clientes(clientes)
 
     return redirect("/clientes")
+
+@app.route("/roteiro", methods = ["GET", "POST"])
+def planejar_viagem():
+    cpf = ""
+    texto_destinos = ""
+    relatorio = None
+    erro = None
+
+    if request.method == "POST":
+        cpf = request.form.get("cpf", "").strip()
+        texto_destinos = request.form.get("destinos", "").strip()
+        codigos = ler_destinos(texto_destinos)
+
+        cliente = clientes.pesquisar(cpf)
+        if cliente is None:
+            erro = "Nenhum cliente com CPF " + cpf + "."
+        elif len(codigos) == 0:
+            erro = "Informe pelo menos um destino."
+        else:
+            relatorio = gerar_relatorio(cliente, codigos, paises, pacotes)
+
+    return render_template(
+        "roteiro.html",
+        cpf=cpf,
+        destinos=texto_destinos,
+        relatorio=relatorio,
+        erro=erro
+        )
 
 
 if __name__ == "__main__":

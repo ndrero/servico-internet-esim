@@ -13,7 +13,7 @@ from json_handler import json_read, json_write
 ARQUIVO_CLIENTES = "clientes.json"
 ORDEM_ARVORE = 2
 
-CAMPOS_CLIENTE = ["cpf", "nome", "email", "telefone", "pais_origem"]
+CAMPOS_CLIENTE = ["cpf", "nome", "email", "telefone", "pais_origem", "pacote"]
 
 
 def carregar_clientes(arquivo=ARQUIVO_CLIENTES, ordem=ORDEM_ARVORE):

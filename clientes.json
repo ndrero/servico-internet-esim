@@ -4,27 +4,31 @@
         "nome": "Ana Souza",
         "email": "ana.souza@example.com",
         "telefone": "+55 71 99999-0001",
-        "pais_origem": "BR"
+        "pais_origem": "BR",
+        "pacote": "EUR30"
     },
     {
         "cpf": "23456789011",
         "nome": "Bruno Lima",
         "email": "bruno.lima@example.com",
         "telefone": "+55 71 99999-0002",
-        "pais_origem": "BR"
+        "pais_origem": "BR",
+        "pacote": "AMS15"
     },
     {
         "cpf": "34567890122",
         "nome": "Carla Mendes",
         "email": "carla.mendes@example.com",
         "telefone": "+55 71 99999-0003",
-        "pais_origem": "PT"
+        "pais_origem": "PT",
+        "pacote": "EUR30"
     },
     {
         "cpf": "53453453534",
         "nome": "Daniel",
         "email": "daniel@email.com",
         "telefone": "55 71 94324 0423",
-        "pais_origem": "BR"
+        "pais_origem": "BR",
+        "pacote": "ASI30"
     }
 ]

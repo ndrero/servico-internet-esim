@@ -1,0 +1,58 @@
+[
+    {
+        "codigo": "AFR15",
+        "nome": "África 15 dias",
+        "regioes": ["África"],
+        "dados_gb": 5,
+        "validade_dias": 15,
+        "preco": 59.9
+    },
+    {
+        "codigo": "AMN30",
+        "nome": "Américas 30 dias",
+        "regioes": ["América do Sul", "América do Norte"],
+        "dados_gb": 20,
+        "validade_dias": 30,
+        "preco": 79.9
+    },
+    {
+        "codigo": "AMS15",
+        "nome": "América do Sul 15 dias",
+        "regioes": ["América do Sul"],
+        "dados_gb": 10,
+        "validade_dias": 15,
+        "preco": 49.9
+    },
+    {
+        "codigo": "ASI30",
+        "nome": "Ásia e Oceania 30 dias",
+        "regioes": ["Ásia", "Oceania"],
+        "dados_gb": 15,
+        "validade_dias": 30,
+        "preco": 99.9
+    },
+    {
+        "codigo": "EUA30",
+        "nome": "Europa e Américas 30 dias",
+        "regioes": ["Europa", "América do Sul", "América do Norte"],
+        "dados_gb": 25,
+        "validade_dias": 30,
+        "preco": 139.9
+    },
+    {
+        "codigo": "EUR30",
+        "nome": "Europa 30 dias",
+        "regioes": ["Europa"],
+        "dados_gb": 20,
+        "validade_dias": 30,
+        "preco": 89.9
+    },
+    {
+        "codigo": "GLB30",
+        "nome": "Global 30 dias",
+        "regioes": ["América do Norte", "América do Sul", "Europa", "Oceania", "África", "Ásia"],
+        "dados_gb": 30,
+        "validade_dias": 30,
+        "preco": 199.9
+    }
+]

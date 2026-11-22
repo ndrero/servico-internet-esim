@@ -16,7 +16,7 @@ body{background:#1f6fb8}
 .head{display:flex;align-items:center;gap:12px;margin:0 0 12px}
 .head h1{margin:0;font-size:24px;font-weight:400}
 .row{display:grid;grid-template-columns:90px 1fr;gap:8px 12px;align-items:center;margin-bottom:8px}
-.row input{width:100%}
+.row input,.row select{width:100%}
 .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 .tbl-wrap{overflow-x:auto}
 .tbl-wrap table{width:100%;min-width:600px}
@@ -90,6 +90,14 @@ td:last-child form{display:inline}
           <div class="row"><label for="email">E-mail:</label><input type="email" id="email" name="email" placeholder="email@exemplo.com"></div>
           <div class="row"><label for="telefone">Telefone:</label><input type="text" id="telefone" name="telefone" placeholder="+55 71 99999-0000"></div>
           <div class="row"><label for="pais_origem">País:</label><input type="text" id="pais_origem" name="pais_origem" placeholder="Código do país (ex.: BR)"></div>
+          <div class="row"><label for="pacote">Pacote:</label>
+            <select id="pacote" name="pacote">
+              <option value="">Sem pacote</option>
+              {% for pacote in pacotes %}
+              <option value="{{ pacote["codigo"] }}">{{ pacote["codigo"] }} — {{ pacote["nome"] }}</option>
+              {% endfor %}
+            </select>
+          </div>
           <div class="actions">
             <button type="submit" class="default">Cadastrar</button>
             <button type="reset">Limpar</button>
@@ -108,7 +116,7 @@ td:last-child form{display:inline}
           {% if cpf %}
             <p class="resultado">
             {% if encontrado %}
-              <b>{{ encontrado["nome"] }}</b> — {{ encontrado["email"] }} — {{ encontrado["telefone"] }} — {{ encontrado["pais_origem"] }}
+              <b>{{ encontrado["nome"] }}</b> — {{ encontrado["email"] }} — {{ encontrado["telefone"] }} — {{ encontrado["pais_origem"] }} — pacote: {{ encontrado["pacote"] or "nenhum" }}
             {% else %}
               Nenhum cliente com CPF <b>{{ cpf }}</b>.
             {% endif %}
@@ -120,7 +128,7 @@ td:last-child form{display:inline}
       <div class="tbl-wrap has-scrollbar" style="margin-top:12px">
         <table class="has-shadow">
           <thead>
-            <tr><th>CPF</th><th>Nome</th><th>E-mail</th><th>Telefone</th><th>País</th></tr>
+            <tr><th>CPF</th><th>Nome</th><th>E-mail</th><th>Telefone</th><th>País</th><th>Pacote</th></tr>
           </thead>
           <tbody>
           {% for cliente in clientes %}
@@ -130,9 +138,10 @@ td:last-child form{display:inline}
               <td>{{ cliente["email"] }}</td>
               <td>{{ cliente["telefone"] }}</td>
               <td>{{ cliente["pais_origem"] }}</td>
+              <td>{{ cliente["pacote"] or "—" }}</td>
             </tr>
           {% else %}
-            <tr class="empty"><td colspan="5">Nenhum cliente cadastrado.</td></tr>
+            <tr class="empty"><td colspan="6">Nenhum cliente cadastrado.</td></tr>
           {% endfor %}
           </tbody>
         </table>
@@ -151,6 +160,7 @@ td:last-child form{display:inline}
   <a class="tb" href="/paises"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-globe"/></svg> Países</a>
   <a class="tb" href="/buscar"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-doc"/></svg> Buscar</a>
   <a class="tb on" href="/clientes"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-doc"/></svg> Clientes</a>
+  <a class="tb" href="/roteiro"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-globe"/></svg> Viagem</a>
   <a class="tb" href="/estatisticas"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-globe"/></svg> Estatísticas</a>
 </div>
 </body>

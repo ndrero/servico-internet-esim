@@ -8,7 +8,7 @@ Aplicação Web em Python/Flask para administrar os países atendidos, os client
 | Etapa | Estrutura | Aplicação | Status |
 |-------|-----------|-----------|--------|
 | 1 | Tabela Hash | Países atendidos e consulta de cobertura | Concluída |
-| 2 | Árvore B | Clientes, eSIMs e pacotes | A fazer |
+| 2 | Árvore B | Clientes, eSIMs e pacotes | Em andamento |
 | 3 | Grafo | Rede internacional e rotas de menor latência | A fazer |
 
 ## Equipe
@@ -42,7 +42,13 @@ servico-internet-esim/
 ├── main.py              # aplicação Flask e rotas
 ├── json_handler.py      # leitura e gravação dos arquivos JSON
 ├── instrumentacao.py    # medição de tempo das operações
+├── arvore_b.py          # implementação da Árvore B
+├── clientes.py          # clientes na Árvore B (chave: CPF)
+├── pacotes.py           # pacotes na Árvore B (chave: código do pacote)
+├── roteiro.py           # diferencial: relatório da viagem
 ├── paises.json          # países cadastrados (persistência)
+├── clientes.json        # clientes cadastrados (persistência)
+├── pacotes.json         # pacotes disponíveis (persistência)
 └── templates/           # páginas HTML (Jinja)
 ```
 
@@ -94,3 +100,12 @@ O cliente cadastra um roteiro com vários países, na ordem em que serão visita
 - **Tabela Hash**: cobertura, operadora e tecnologia de cada destino; destinos sem cobertura são sinalizados.
 - **Árvore B**: localiza o cliente e o seu pacote; o sistema verifica se o pacote cobre todas as regiões do roteiro e recomenda um pacote adequado.
 - **Grafo**: rota de menor latência (Dijkstra) entre destinos consecutivos e latência total da viagem.
+
+### Como está implementado
+
+A página `/roteiro` (menu **Viagem**) recebe o CPF do cliente e os destinos na ordem da viagem (ex.: `BR, PT, FR, IT`). A função `gerar_relatorio` do arquivo `roteiro.py` faz:
+
+1. busca o cliente na Árvore B de clientes pelo CPF;
+2. consulta cada destino na Tabela Hash de países; o que não estiver na tabela aparece como **sem cobertura**;
+3. busca o pacote do cliente na Árvore B de pacotes e compara as regiões do pacote com as regiões do roteiro;
+4. se faltar alguma região, percorre os pacotes em ordem e recomenda o mais barato que cubra todas.
