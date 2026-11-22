@@ -7,7 +7,7 @@ carregado na árvore e, quando algo muda, a árvore é gravada de volta.
 """
 import os
 
-from arvore_b import ArvoreB
+from estruturas.arvore_b import ArvoreB
 from json_handler import json_read, json_write
 
 ARQUIVO_PACOTES = "pacotes.json"

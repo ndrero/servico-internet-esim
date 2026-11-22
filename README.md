@@ -29,6 +29,9 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 # instalar dependências
 pip install flask
 
+# (opcional) gerar os ~1.000 clientes de teste em clientes.json
+python gerar_clientes.py
+
 # iniciar a aplicação
 python main.py
 ```
@@ -42,8 +45,10 @@ servico-internet-esim/
 ├── main.py              # aplicação Flask e rotas
 ├── json_handler.py      # leitura e gravação dos arquivos JSON
 ├── instrumentacao.py    # medição de tempo das operações
-├── arvore_b.py          # implementação da Árvore B
-├── clientes.py          # clientes na Árvore B (chave: CPF)
+├── estruturas/
+│   └── arvore_b.py      # implementação da Árvore B
+├── clientes.py          # clientes na Árvore B (chave: id)
+├── gerar_clientes.py    # gera ~1.000 clientes fictícios
 ├── pacotes.py           # pacotes na Árvore B (chave: código do pacote)
 ├── roteiro.py           # diferencial: relatório da viagem
 ├── paises.json          # países cadastrados (persistência)
@@ -93,6 +98,80 @@ As rotas que alteram dados usam POST e redirecionam para a listagem (padrão Pos
 
 O módulo `instrumentacao.py` mede, com `time.perf_counter_ns()`, o tempo de cada operação na tabela hash: inserção, busca, alteração, remoção e listagem. Para cada operação, guarda a quantidade de execuções e o tempo total. A página `/estatisticas` mostra esses dados junto com o total de registros, o que permite observar que o custo das operações não cresce com o número de países. Cada medição também é exibida no terminal.
 
+## Etapa 2. Árvore B
+
+### Estrutura
+
+Clientes e pacotes de dados ficam em duas Árvores B (`estruturas/arvore_b.py`): os clientes indexados pelo **id** e os pacotes pelo **código** (`EUR30`, `GLB30`...). A árvore usa a definição por **ordem M** do material da disciplina: cada página guarda de M a 2M chaves (a raiz pode ter menos) e todas as folhas ficam no mesmo nível. A ordem é configurável (`ArvoreB(ordem)`); usamos M = 2. Busca, inserção, alteração e remoção custam **O(log n)**.
+
+| Método | O que faz |
+|--------|-----------|
+| `buscar(chave)` | desce da raiz até achar a chave ou chegar numa folha, contando páginas visitadas e comparações |
+| `inserir(chave, elemento)` | insere na folha; se a página passar de 2M chaves, divide (split) e a chave do meio sobe; se a raiz se dividir, a árvore cresce em altura |
+| `atualizar(chave, elemento)` | troca os dados guardados na chave |
+| `remover(chave)` | remove a chave; se uma página ficar com menos de M chaves, pega emprestado de uma irmã ou junta as duas (opcional no enunciado) |
+| `listar()` | percurso em ordem (o resultado sai ordenado pela chave) |
+| `listar_pagina(inicio, quantidade)` | percurso em ordem que para ao juntar uma página da listagem |
+| `listar_menores(chave)` / `listar_maiores(chave)` | percurso em ordem só pelas subárvores que podem ter chaves na faixa |
+| `resumo()` / `niveis()` | instrumentação e chaves de cada página, nível por nível |
+
+`pesquisar` e `alterar` são os mesmos métodos com os nomes do material da disciplina.
+
+Na remoção de uma chave que está numa página interna, ela é trocada pela antecessora (a maior chave da subárvore da esquerda, que sempre está numa folha) e a remoção continua na folha. Se a raiz ficar sem chaves, o filho único vira a nova raiz e a árvore diminui de altura.
+
+### Dados
+
+Cliente (campos do enunciado + extras):
+
+```json
+{
+    "id": 58372,
+    "nome": "Maria Silva",
+    "email": "maria.silva372@email.com",
+    "esim": "ESIM-83921",
+    "pacote": "EUR30",
+    "status": "ativo",
+    "cpf": "12345678900",
+    "telefone": "+55 71 99999-0001",
+    "pais_origem": "BR"
+}
+```
+
+`gerar_clientes.py` cria cerca de 1.000 clientes com id e eSIM únicos, pacote existente em `pacotes.json`, status (`ativo`, `inativo` ou `suspenso`) e país de origem existente em `paises.json`. Aceita a quantidade e uma semente: `python gerar_clientes.py 1000 2026`. O arquivo `clientes.json` é sobrescrito.
+
+### Persistência
+
+Ao iniciar, `clientes.json` e `pacotes.json` são carregados nas árvores. Toda busca passa pela árvore. Depois de cada alteração, a árvore é percorrida em ordem e gravada de volta no arquivo.
+
+### Funcionalidades
+
+| Rota | Método | Função |
+|------|--------|--------|
+| `/clientes` | GET | Lista os clientes em ordem, 50 por página (`?pagina=`); busca por id (`?id=`) mostrando o caminho percorrido na árvore; filtra por faixa (`?filtro=menores\|maiores&referencia=`) |
+| `/clientes/cadastrar` | POST | Insere um cliente (rejeita id ou eSIM repetido; eSIM em branco gera um novo) |
+| `/clientes/atualizar/<id>` | GET / POST | Altera os dados de um cliente, incluindo eSIM, pacote e status (o id não muda) |
+| `/clientes/deletar/<id>` | POST | Remove um cliente |
+| `/consulta?id=&destino=` | GET | Consulta integrada: cliente na Árvore B × país na Tabela Hash |
+| `/pacotes` | GET | Lista os pacotes e desenha as páginas da árvore |
+| `/pacotes/cadastrar` | POST | Insere um pacote (rejeita código duplicado) |
+| `/pacotes/atualizar/<codigo>` | GET / POST | Altera os dados de um pacote |
+| `/pacotes/deletar/<codigo>` | POST | Remove um pacote (bloqueado se algum cliente ainda usa o pacote) |
+
+### Integração Árvore B × Tabela Hash
+
+A página `/consulta` (menu **Consulta**) recebe o id do cliente e o código do destino e faz duas buscas:
+
+1. `clientes.buscar(id)` na Árvore B: nome, eSIM, status e pacote;
+2. `paises.get(codigo)` na Tabela Hash: país, região, operadora e tecnologia.
+
+O resultado mostra as duas respostas juntas, a instrumentação de cada busca (páginas visitadas, comparações e caminho na árvore; tempo das duas) e se o pacote do cliente cobre a região do destino.
+
+### Instrumentação
+
+Cada árvore conta: altura, número de páginas (nós), ocupação média, splits, junções e empréstimos (da remoção), e páginas visitadas e comparações por busca. Os tempos das operações são medidos como na Etapa 1, numa tabela separada (`estatisticas_arvore` em `instrumentacao.py`). Tudo aparece em `/clientes` e `/estatisticas`.
+
+Uma observação que dá para ver na instrumentação: como o `clientes.json` está ordenado por id, a carga insere as chaves em ordem crescente. Cada split deixa a página da esquerda com só M chaves, que nunca mais recebe inserções. Com isso a ocupação média fica perto do mínimo (cerca de 2 chaves por página com M = 2) e a árvore fica com altura 6 para 1.000 clientes.
+
 ## Diferencial: Planejamento de viagens com múltiplos destinos
 
 O cliente cadastra um roteiro com vários países, na ordem em que serão visitados (ex.: `BR → PT → FR → IT`), e o sistema gera um relatório da viagem inteira, combinando as três estruturas:
@@ -103,9 +182,18 @@ O cliente cadastra um roteiro com vários países, na ordem em que serão visita
 
 ### Como está implementado
 
-A página `/roteiro` (menu **Viagem**) recebe o CPF do cliente e os destinos na ordem da viagem (ex.: `BR, PT, FR, IT`). A função `gerar_relatorio` do arquivo `roteiro.py` faz:
+A página `/roteiro` (menu **Viagem**) recebe o id do cliente e os destinos na ordem da viagem (ex.: `BR, PT, FR, IT`). A função `gerar_relatorio` do arquivo `roteiro.py` faz:
 
-1. busca o cliente na Árvore B de clientes pelo CPF;
+1. busca o cliente na Árvore B de clientes pelo id;
 2. consulta cada destino na Tabela Hash de países; o que não estiver na tabela aparece como **sem cobertura**;
 3. busca o pacote do cliente na Árvore B de pacotes e compara as regiões do pacote com as regiões do roteiro;
 4. se faltar alguma região, percorre os pacotes em ordem e recomenda o mais barato que cubra todas.
+
+## Decisões de implementação
+
+- **Tabela Hash**: implementada com o `dict` do Python (aceito pela professora na Etapa 1).
+- **Árvore B**: definida pela ordem M do material da disciplina (M a 2M chaves por página), com M = 2 para que as divisões apareçam com poucos registros. A remoção, opcional no enunciado, foi implementada.
+- **Chave dos clientes**: `id` numérico, como no enunciado. CPF, telefone e país de origem ficam como campos extras.
+- **Pacotes**: também guardados numa Árvore B, indexados pelo código (o enunciado permite deixá-los em lista).
+- **Origem da rota (Etapa 3)**: será o campo `pais_origem` do cliente.
+

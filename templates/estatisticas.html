@@ -69,7 +69,7 @@ td:last-child form{display:inline}
 <div class="background">
   <div class="window glass active" style="max-width:900px" role="region" aria-labelledby="titulo-janela">
     <div class="title-bar">
-      <div class="title-bar-text" id="titulo-janela"><svg class="i" width="16" height="16" aria-hidden="true"><use href="#ic-globe"/></svg> Estatísticas da Tabela Hash — ED-II</div>
+      <div class="title-bar-text" id="titulo-janela"><svg class="i" width="16" height="16" aria-hidden="true"><use href="#ic-globe"/></svg> Estatísticas — ED-II</div>
       <div class="title-bar-controls">
           <button aria-label="Minimize"></button>
           <button aria-label="Maximize"></button>
@@ -78,6 +78,7 @@ td:last-child form{display:inline}
     </div>
     <div class="window-body has-space">
       <div class="head"><svg class="i" width="44" height="44" aria-hidden="true"><use href="#ic-globe"/></svg><h1>Estatísticas</h1></div>
+      <h3>Tabela Hash — países</h3>
       <p>Tempo gasto em cada operação sobre a tabela hash (<code>dict</code>), medido com <code>time.perf_counter_ns()</code>. Os valores zeram quando o servidor reinicia.</p>
       <div class="tbl-wrap has-scrollbar">
         <table class="has-shadow">
@@ -96,9 +97,42 @@ td:last-child form{display:inline}
           </tbody>
         </table>
       </div>
+
+      <h3 style="margin-top:18px">Árvore B — clientes e pacotes</h3>
+      <p>Estado das Árvores B de clientes (chave: id) e de pacotes (chave: código). Splits, junções e empréstimos contam desde que o servidor iniciou, incluindo a carga dos arquivos JSON.</p>
+      <div class="tbl-wrap has-scrollbar">
+        <table class="has-shadow">
+          <thead>
+            <tr><th>Métrica</th><th>Clientes</th><th>Pacotes</th></tr>
+          </thead>
+          <tbody>
+          {% for chave, nome in [("ordem", "Ordem"), ("chaves_por_pagina", "Chaves por página"), ("registros", "Registros"), ("altura", "Altura"), ("paginas", "Páginas (nós)"), ("ocupacao_media", "Ocupação média (chaves/página)"), ("splits", "Splits (divisões)"), ("juncoes", "Junções (remoção)"), ("emprestimos", "Empréstimos (remoção)"), ("buscas", "Buscas"), ("media_paginas_por_busca", "Média de páginas visitadas por busca"), ("media_comparacoes_por_busca", "Média de comparações por busca")] %}
+            <tr><td>{{ nome }}</td><td>{{ resumo_clientes[chave] }}</td><td>{{ resumo_pacotes[chave] }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:12px">Tempo das operações nas Árvores B, medido com <code>time.perf_counter_ns()</code>:</p>
+      <div class="tbl-wrap has-scrollbar">
+        <table class="has-shadow">
+          <thead>
+            <tr><th>Operação</th><th>Quantidade</th><th>Tempo total (ns)</th><th>Tempo médio (ns)</th></tr>
+          </thead>
+          <tbody>
+          {% for operacao, dados in estatisticas_arvore.items() %}
+            <tr>
+              <td>{{ operacao }}</td>
+              <td>{{ dados["quantidade"] }}</td>
+              <td>{{ dados["tempo_total_ns"] }}</td>
+              <td>{{ (dados["tempo_total_ns"] // dados["quantidade"]) if dados["quantidade"] else 0 }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
     <div class="status-bar">
-      <p class="status-bar-field">{{ total_registros }} registro(s)</p>
+      <p class="status-bar-field">{{ total_registros }} país(es) • {{ resumo_clientes["registros"] }} cliente(s) • {{ resumo_pacotes["registros"] }} pacote(s)</p>
       <p class="status-bar-field">Estruturas de Dados em Python • ED-II</p>
     </div>
   </div>
@@ -110,6 +144,8 @@ td:last-child form{display:inline}
   <a class="tb" href="/paises"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-globe"/></svg> Países</a>
   <a class="tb" href="/buscar"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-doc"/></svg> Buscar</a>
   <a class="tb" href="/clientes"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-doc"/></svg> Clientes</a>
+  <a class="tb" href="/pacotes"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-globe"/></svg> Pacotes</a>
+  <a class="tb" href="/consulta"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-doc"/></svg> Consulta</a>
   <a class="tb" href="/roteiro"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-globe"/></svg> Viagem</a>
   <a class="tb on" href="/estatisticas"><svg class="i" width="18" height="18" aria-hidden="true"><use href="#ic-globe"/></svg> Estatísticas</a>
 </div>
