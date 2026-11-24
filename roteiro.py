@@ -1,14 +1,3 @@
-"""
-Diferencial: planejamento de viagem com múltiplos destinos.
-
-O cliente informa os países na ordem em que vai visitar (ex.: BR PT FR IT)
-e o sistema monta um relatório da viagem usando as estruturas do trabalho:
-
-- Tabela Hash (paises): cobertura, operadora e tecnologia de cada destino.
-- Árvore B (clientes e pacotes): acha o cliente e o pacote dele, verifica
-  se o pacote cobre todas as regiões do roteiro e recomenda outro se precisar.
-- Grafo: rota de menor latência entre os destinos (fica para a Etapa 3).
-"""
 from instrumentacao import agora, registrar
 
 
@@ -19,9 +8,9 @@ def ler_destinos(texto):
 
 
 def gerar_relatorio(cliente, codigos, paises, pacotes):
-    destinos = []        # uma linha do relatório para cada país do roteiro
-    regioes_viagem = []  # regiões que a viagem passa, sem repetir
-    sem_cobertura = []   # códigos que não estão na tabela hash
+    destinos = [] # uma linha do relatório para cada país do roteiro
+    regioes_viagem = [] # regiões que a viagem passa, sem repetir
+    sem_cobertura = [] # códigos que não estão na tabela hash
 
     # pacote atual do cliente (busca na Árvore B de pacotes)
     pacote_atual = None
