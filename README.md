@@ -8,7 +8,7 @@ Aplicação Web em Python/Flask para administrar os países atendidos, os client
 | Etapa | Estrutura | Aplicação | Status |
 |-------|-----------|-----------|--------|
 | 1 | Tabela Hash | Países atendidos e consulta de cobertura | Concluída |
-| 2 | Árvore B | Clientes, eSIMs e pacotes | Em andamento |
+| 2 | Árvore B | Clientes, eSIMs e pacotes | Concluída |
 | 3 | Grafo | Rede internacional e rotas de menor latência | A fazer |
 
 ## Equipe
@@ -90,7 +90,7 @@ Ao iniciar, a aplicação carrega o arquivo `paises.json` na tabela hash. Todas 
 | `/buscar/<codigo>` | GET | Retorna os dados do país em JSON |
 | `/atualizar/<codigo>` | GET / POST | Altera os dados de um país |
 | `/deletar/<codigo>` | POST | Remove um país |
-| `/estatisticas` | GET | Exibe a instrumentação da tabela hash |
+| `/estatisticas` | GET | Exibe a instrumentação das estruturas |
 
 As rotas que alteram dados usam POST e redirecionam para a listagem (padrão Post/Redirect/Get).
 
@@ -102,22 +102,16 @@ O módulo `instrumentacao.py` mede, com `time.perf_counter_ns()`, o tempo de cad
 
 ### Estrutura
 
-Clientes e pacotes de dados ficam em duas Árvores B (`estruturas/arvore_b.py`): os clientes indexados pelo **id** e os pacotes pelo **código** (`EUR30`, `GLB30`...). A árvore usa a definição por **ordem M** do material da disciplina: cada página guarda de M a 2M chaves (a raiz pode ter menos) e todas as folhas ficam no mesmo nível. A ordem é configurável (`ArvoreB(ordem)`); usamos M = 2. Busca, inserção, alteração e remoção custam **O(log n)**.
+Clientes e pacotes de dados ficam em duas Árvores B (`estruturas/arvore_b.py`): os clientes indexados pelo **id** e os pacotes pelo **código** (`EUR30`, `GLB30`...). A árvore usa a definição por **ordem M** do material da disciplina: cada página guarda de M a 2M chaves (a raiz pode ter menos) e todas as folhas ficam no mesmo nível. A ordem é configurável (`ArvoreB(ordem)`); usamos M = 2. Busca, inserção e alteração custam **O(log n)**.
 
 | Método | O que faz |
 |--------|-----------|
 | `buscar(chave)` | desce da raiz até achar a chave ou chegar numa folha, contando páginas visitadas e comparações |
 | `inserir(chave, elemento)` | insere na folha; se a página passar de 2M chaves, divide (split) e a chave do meio sobe; se a raiz se dividir, a árvore cresce em altura |
 | `atualizar(chave, elemento)` | troca os dados guardados na chave |
-| `remover(chave)` | remove a chave; se uma página ficar com menos de M chaves, pega emprestado de uma irmã ou junta as duas (opcional no enunciado) |
 | `listar()` | percurso em ordem (o resultado sai ordenado pela chave) |
-| `listar_pagina(inicio, quantidade)` | percurso em ordem que para ao juntar uma página da listagem |
-| `listar_menores(chave)` / `listar_maiores(chave)` | percurso em ordem só pelas subárvores que podem ter chaves na faixa |
-| `resumo()` / `niveis()` | instrumentação e chaves de cada página, nível por nível |
 
-`pesquisar` e `alterar` são os mesmos métodos com os nomes do material da disciplina.
-
-Na remoção de uma chave que está numa página interna, ela é trocada pela antecessora (a maior chave da subárvore da esquerda, que sempre está numa folha) e a remoção continua na folha. Se a raiz ficar sem chaves, o filho único vira a nova raiz e a árvore diminui de altura.
+A remoção é opcional no enunciado e não foi implementada.
 
 ### Dados
 
@@ -147,15 +141,13 @@ Ao iniciar, `clientes.json` e `pacotes.json` são carregados nas árvores. Toda 
 
 | Rota | Método | Função |
 |------|--------|--------|
-| `/clientes` | GET | Lista os clientes em ordem, 50 por página (`?pagina=`); busca por id (`?id=`) mostrando o caminho percorrido na árvore; filtra por faixa (`?filtro=menores\|maiores&referencia=`) |
+| `/clientes` | GET | Lista os clientes em ordem, 50 por página (`?pagina=`); busca por id (`?id=`) |
 | `/clientes/cadastrar` | POST | Insere um cliente (rejeita id ou eSIM repetido; eSIM em branco gera um novo) |
 | `/clientes/atualizar/<id>` | GET / POST | Altera os dados de um cliente, incluindo eSIM, pacote e status (o id não muda) |
-| `/clientes/deletar/<id>` | POST | Remove um cliente |
 | `/consulta?id=&destino=` | GET | Consulta integrada: cliente na Árvore B × país na Tabela Hash |
-| `/pacotes` | GET | Lista os pacotes e desenha as páginas da árvore |
+| `/pacotes` | GET | Lista os pacotes |
 | `/pacotes/cadastrar` | POST | Insere um pacote (rejeita código duplicado) |
 | `/pacotes/atualizar/<codigo>` | GET / POST | Altera os dados de um pacote |
-| `/pacotes/deletar/<codigo>` | POST | Remove um pacote (bloqueado se algum cliente ainda usa o pacote) |
 
 ### Integração Árvore B × Tabela Hash
 
@@ -164,21 +156,21 @@ A página `/consulta` (menu **Consulta**) recebe o id do cliente e o código do 
 1. `clientes.buscar(id)` na Árvore B: nome, eSIM, status e pacote;
 2. `paises.get(codigo)` na Tabela Hash: país, região, operadora e tecnologia.
 
-O resultado mostra as duas respostas juntas, a instrumentação de cada busca (páginas visitadas, comparações e caminho na árvore; tempo das duas) e se o pacote do cliente cobre a região do destino.
+O resultado mostra as duas respostas juntas e se o pacote do cliente cobre a região do destino.
 
 ### Instrumentação
 
-Cada árvore conta: altura, número de páginas (nós), ocupação média, splits, junções e empréstimos (da remoção), e páginas visitadas e comparações por busca. Os tempos das operações são medidos como na Etapa 1, numa tabela separada (`estatisticas_arvore` em `instrumentacao.py`). Tudo aparece em `/clientes` e `/estatisticas`.
+Cada árvore conta: altura, registros, número de páginas (nós), splits, e páginas visitadas, comparações e caminho da última operação (busca, inserção ou alteração). Os tempos das operações são medidos como na Etapa 1, numa tabela separada (`estatisticas_arvore` em `instrumentacao.py`). Tudo aparece em `/estatisticas`.
 
-Uma observação que dá para ver na instrumentação: como o `clientes.json` está ordenado por id, a carga insere as chaves em ordem crescente. Cada split deixa a página da esquerda com só M chaves, que nunca mais recebe inserções. Com isso a ocupação média fica perto do mínimo (cerca de 2 chaves por página com M = 2) e a árvore fica com altura 6 para 1.000 clientes.
+Uma observação que dá para ver na instrumentação: como o `clientes.json` está ordenado por id, a carga insere as chaves em ordem crescente. Cada split deixa a página da esquerda com só M chaves, que nunca mais recebe inserções. Com isso as páginas ficam perto do mínimo (cerca de 2 chaves por página com M = 2: registros ÷ páginas) e a árvore fica com altura 6 para 1.000 clientes.
 
 ## Diferencial: Planejamento de viagens com múltiplos destinos
 
-O cliente cadastra um roteiro com vários países, na ordem em que serão visitados (ex.: `BR → PT → FR → IT`), e o sistema gera um relatório da viagem inteira, combinando as três estruturas:
+O cliente cadastra um roteiro com vários países, na ordem em que serão visitados (ex.: `BR → PT → FR → IT`), e o sistema gera um relatório da viagem inteira, combinando as estruturas do trabalho:
 
 - **Tabela Hash**: cobertura, operadora e tecnologia de cada destino; destinos sem cobertura são sinalizados.
 - **Árvore B**: localiza o cliente e o seu pacote; o sistema verifica se o pacote cobre todas as regiões do roteiro e recomenda um pacote adequado.
-- **Grafo**: rota de menor latência (Dijkstra) entre destinos consecutivos e latência total da viagem.
+- **Grafo** (Etapa 3, ainda não implementado): rota de menor latência (Dijkstra) entre destinos consecutivos e latência total da viagem.
 
 ### Como está implementado
 
@@ -192,7 +184,7 @@ A página `/roteiro` (menu **Viagem**) recebe o id do cliente e os destinos na o
 ## Decisões de implementação
 
 - **Tabela Hash**: implementada com o `dict` do Python (aceito pela professora na Etapa 1).
-- **Árvore B**: definida pela ordem M do material da disciplina (M a 2M chaves por página), com M = 2 para que as divisões apareçam com poucos registros. A remoção, opcional no enunciado, foi implementada.
+- **Árvore B**: definida pela ordem M do material da disciplina (M a 2M chaves por página), com M = 2 para que as divisões apareçam com poucos registros. A remoção, opcional no enunciado, não foi implementada.
 - **Chave dos clientes**: `id` numérico, como no enunciado. CPF, telefone e país de origem ficam como campos extras.
 - **Pacotes**: também guardados numa Árvore B, indexados pelo código (o enunciado permite deixá-los em lista).
 - **Origem da rota (Etapa 3)**: será o campo `pais_origem` do cliente.

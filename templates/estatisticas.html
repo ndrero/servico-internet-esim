@@ -99,16 +99,19 @@ td:last-child form{display:inline}
       </div>
 
       <h3 style="margin-top:18px">Árvore B — clientes e pacotes</h3>
-      <p>Estado das Árvores B de clientes (chave: id) e de pacotes (chave: código). Splits, junções e empréstimos contam desde que o servidor iniciou, incluindo a carga dos arquivos JSON.</p>
+      <p>Estado das Árvores B de clientes (chave: id) e de pacotes (chave: código). Os splits contam desde que o servidor iniciou, incluindo a carga dos arquivos JSON.</p>
       <div class="tbl-wrap has-scrollbar">
         <table class="has-shadow">
           <thead>
             <tr><th>Métrica</th><th>Clientes</th><th>Pacotes</th></tr>
           </thead>
           <tbody>
-          {% for chave, nome in [("ordem", "Ordem"), ("chaves_por_pagina", "Chaves por página"), ("registros", "Registros"), ("altura", "Altura"), ("paginas", "Páginas (nós)"), ("ocupacao_media", "Ocupação média (chaves/página)"), ("splits", "Splits (divisões)"), ("juncoes", "Junções (remoção)"), ("emprestimos", "Empréstimos (remoção)"), ("buscas", "Buscas"), ("media_paginas_por_busca", "Média de páginas visitadas por busca"), ("media_comparacoes_por_busca", "Média de comparações por busca")] %}
-            <tr><td>{{ nome }}</td><td>{{ resumo_clientes[chave] }}</td><td>{{ resumo_pacotes[chave] }}</td></tr>
+          {% for chave, nome in [("ordem", "Ordem"), ("max_chaves", "Máximo de chaves por página"), ("registros", "Registros"), ("altura", "Altura"), ("paginas", "Páginas (nós)"), ("splits", "Splits (divisões)")] %}
+            <tr><td>{{ nome }}</td><td>{{ clientes[chave] }}</td><td>{{ pacotes[chave] }}</td></tr>
           {% endfor %}
+            <tr><td>Páginas visitadas (última operação)</td><td>{{ clientes.ultima_busca["paginas_visitadas"] }}</td><td>{{ pacotes.ultima_busca["paginas_visitadas"] }}</td></tr>
+            <tr><td>Comparações (última operação)</td><td>{{ clientes.ultima_busca["comparacoes"] }}</td><td>{{ pacotes.ultima_busca["comparacoes"] }}</td></tr>
+            <tr><td>Caminho (última operação)</td>{% for arvore in [clientes, pacotes] %}<td>{% for chaves in arvore.ultima_busca["caminho"] %}[{{ chaves|join(" ") }}]{% if not loop.last %} → {% endif %}{% endfor %}</td>{% endfor %}</tr>
           </tbody>
         </table>
       </div>
@@ -132,7 +135,7 @@ td:last-child form{display:inline}
       </div>
     </div>
     <div class="status-bar">
-      <p class="status-bar-field">{{ total_registros }} país(es) • {{ resumo_clientes["registros"] }} cliente(s) • {{ resumo_pacotes["registros"] }} pacote(s)</p>
+      <p class="status-bar-field">{{ total_registros }} país(es) • {{ clientes.registros }} cliente(s) • {{ pacotes.registros }} pacote(s)</p>
       <p class="status-bar-field">Estruturas de Dados em Python • ED-II</p>
     </div>
   </div>

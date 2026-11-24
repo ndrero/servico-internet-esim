@@ -36,12 +36,6 @@ td:last-child form{display:inline}
 .busca input{flex:1}
 .resultado{margin:10px 0 0}
 .busca select{width:auto}
-.arvore{display:flex;flex-direction:column;gap:14px;align-items:center;padding:12px 4px;overflow-x:auto}
-.nivel{display:flex;gap:10px;justify-content:center}
-.pagina{display:flex;border:1px solid #5b86b5;border-radius:3px;background:linear-gradient(to bottom,#fff,#d9ebfb);font-family:Consolas,monospace;font-size:11px}
-.pagina span{padding:4px 6px}
-.pagina span+span{border-left:1px solid #9bbbe0}
-.legenda{margin:6px 0 0;color:#555;font-size:11px;text-align:center}
 </style>
 </head>
 <body>
@@ -124,9 +118,6 @@ td:last-child form{display:inline}
                 <form action="/pacotes/atualizar/{{ pacote['codigo'] }}" method="get">
                   <button type="submit">Atualizar</button>
                 </form>
-                <form action="/pacotes/deletar/{{ pacote['codigo'] }}" method="post" onsubmit="return confirm('Tem certeza que deseja excluir?');">
-                  <button type="submit">Deletar</button>
-                </form>
               </td>
             </tr>
           {% else %}
@@ -135,27 +126,9 @@ td:last-child form{display:inline}
           </tbody>
         </table>
       </div>
-
-      <fieldset style="margin-top:12px">
-        <legend>Páginas da Árvore B (chave: código do pacote)</legend>
-        {% if niveis %}
-        <div class="arvore">
-          {% for nivel in niveis %}
-          <div class="nivel">
-            {% for pagina in nivel %}
-            <div class="pagina">{% for chave in pagina %}<span>{{ chave }}</span>{% endfor %}</div>
-            {% endfor %}
-          </div>
-          {% endfor %}
-        </div>
-        <p class="legenda">Cada caixa é uma página; cada linha é um nível, da raiz até as folhas.</p>
-        {% else %}
-        <p class="legenda">Árvore vazia.</p>
-        {% endif %}
-      </fieldset>
     </div>
     <div class="status-bar">
-      <p class="status-bar-field">{{ pacotes|length }} pacote(s) • altura da árvore: {{ altura }}</p>
+      <p class="status-bar-field">{{ pacotes|length }} pacote(s)</p>
       <p class="status-bar-field">Etapa 2 — Árvore B (ordenado por código)</p>
     </div>
   </div>

@@ -38,12 +38,6 @@ td:last-child{text-align:right;white-space:nowrap}
 .atalho:hover{border-color:#6fa3da;background:linear-gradient(to bottom,#f4faff,#d9ebfb)}
 .atalho span{display:flex;flex-direction:column;gap:2px}
 .atalho small{color:#555}
-.arvore{display:flex;flex-direction:column;gap:14px;align-items:center;padding:12px 4px;overflow-x:auto}
-.nivel{display:flex;gap:10px;justify-content:center}
-.pagina{display:flex;border:1px solid #5b86b5;border-radius:3px;background:linear-gradient(to bottom,#fff,#d9ebfb);font-family:Consolas,monospace;font-size:11px}
-.pagina span{padding:4px 6px}
-.pagina span+span{border-left:1px solid #9bbbe0}
-.legenda{margin:6px 0 0;color:#555;font-size:11px;text-align:center}
 @media (max-width:480px){.atalhos{grid-template-columns:1fr}}
 </style>
 </head>
@@ -99,7 +93,7 @@ td:last-child{text-align:right;white-space:nowrap}
           <a class="atalho" href="/cadastro"><svg class="i" width="32" height="32" aria-hidden="true"><use href="#ic-doc"/></svg><span>Cadastrar país<small>Adicionar um novo país atendido</small></span></a>
           <a class="atalho" href="/paises"><svg class="i" width="32" height="32" aria-hidden="true"><use href="#ic-globe"/></svg><span>Países<small>Listar, alterar e remover</small></span></a>
           <a class="atalho" href="/buscar"><svg class="i" width="32" height="32" aria-hidden="true"><use href="#ic-doc"/></svg><span>Buscar<small>Consultar cobertura por código</small></span></a>
-          <a class="atalho" href="/clientes"><svg class="i" width="32" height="32" aria-hidden="true"><use href="#ic-doc"/></svg><span>Clientes<small>Cadastrar, alterar, remover e buscar</small></span></a>
+          <a class="atalho" href="/clientes"><svg class="i" width="32" height="32" aria-hidden="true"><use href="#ic-doc"/></svg><span>Clientes<small>Cadastrar, alterar e buscar</small></span></a>
           <a class="atalho" href="/pacotes"><svg class="i" width="32" height="32" aria-hidden="true"><use href="#ic-globe"/></svg><span>Pacotes<small>Pacotes de dados por região</small></span></a>
           <a class="atalho" href="/consulta"><svg class="i" width="32" height="32" aria-hidden="true"><use href="#ic-doc"/></svg><span>Consulta<small>Cliente (Árvore B) × destino (Hash)</small></span></a>
           <a class="atalho" href="/roteiro"><svg class="i" width="32" height="32" aria-hidden="true"><use href="#ic-globe"/></svg><span>Planejar viagem<small>Roteiro com vários países</small></span></a>

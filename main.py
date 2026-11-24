@@ -15,7 +15,7 @@ pacotes = carregar_pacotes()
 def home():
     return render_template(
         "inicio.html",
-        total_clientes=clientes.tamanho()
+        total_clientes=clientes.registros
         )
 
 @app.route("/cadastro")
@@ -64,7 +64,6 @@ def atualizar_pais(pais_id):
 
     if request.method == 'POST':
         inicio = agora()
-        pais_atual["codigo"] = request.form["codigo"]
         pais_atual["pais"] = request.form["pais"]
         pais_atual["regiao"] = request.form["regiao"]
         pais_atual["operadora"] = request.form["operadora"]
@@ -119,12 +118,10 @@ def pagina_estatisticas():
         estatisticas=estatisticas,
         estatisticas_arvore=estatisticas_arvore,
         total_registros=len(paises),
-        resumo_clientes=clientes.resumo(),
-        resumo_pacotes=pacotes.resumo()
+        clientes=clientes,
+        pacotes=pacotes
         )
 
-
-# ---------------- Clientes (Árvore B) ----------------
 
 POR_PAGINA = 50
 
@@ -150,37 +147,23 @@ def esim_repetido(esim, id_cliente):
 @app.route("/clientes")
 def pagina_clientes():
     texto_id = request.args.get("id", "").strip()
-    filtro = request.args.get("filtro", "")
-    referencia = request.args.get("referencia", "").strip()
     pagina = max(ler_id(request.args.get("pagina")) or 1, 1)
 
     encontrado = None
-    busca = None
     if texto_id:
         id_cliente = ler_id(texto_id)
         if id_cliente is not None:
             inicio = agora()
             encontrado = clientes.buscar(id_cliente)
             registrar("busca", inicio, estatisticas_arvore)
-            busca = clientes.ultima_busca
 
     inicio = agora()
-    id_referencia = ler_id(referencia)
-    if filtro in ("menores", "maiores") and id_referencia is not None:
-        if filtro == "menores":
-            filtrados = clientes.listar_menores(id_referencia)
-        else:
-            filtrados = clientes.listar_maiores(id_referencia)
-        total = len(filtrados)
-        lista = filtrados[(pagina - 1) * POR_PAGINA : pagina * POR_PAGINA]
-    else:
-        filtro = ""
-        total = clientes.tamanho()
-        lista = clientes.listar_pagina((pagina - 1) * POR_PAGINA, POR_PAGINA)
+    primeiro = (pagina - 1) * POR_PAGINA
+    lista = clientes.listar()[primeiro : primeiro + POR_PAGINA]
     registrar("listagem", inicio, estatisticas_arvore)
 
+    total = clientes.registros
     total_paginas = max((total + POR_PAGINA - 1) // POR_PAGINA, 1)
-    resumo = clientes.resumo()
 
     return render_template(
         "clientes.html",
@@ -190,15 +173,8 @@ def pagina_clientes():
         total_paginas=total_paginas,
         id_busca=texto_id,
         encontrado=encontrado,
-        busca=busca,
-        filtro=filtro,
-        referencia=referencia,
         pacotes=pacotes.listar(),
-        status_cliente=STATUS_CLIENTE,
-        resumo=resumo,
-        # o desenho das páginas só é legível com poucos registros
-        niveis=clientes.niveis() if resumo["paginas"] <= 40 else None,
-        altura=resumo["altura"]
+        status_cliente=STATUS_CLIENTE
         )
 
 @app.route("/clientes/cadastrar", methods = ["POST"])
@@ -253,20 +229,6 @@ def atualizar_cliente(id_cliente):
         status_cliente=STATUS_CLIENTE
         )
 
-@app.route("/clientes/deletar/<int:id_cliente>", methods = ["POST"])
-def deletar_cliente(id_cliente):
-    inicio = agora()
-    removeu = clientes.remover(id_cliente)
-    registrar("remocao", inicio, estatisticas_arvore)
-
-    if not removeu:
-        return "Cliente não encontrado", 404
-
-    salvar_clientes(clientes)
-    return redirect("/clientes")
-
-
-# ---------------- Consulta integrada: Árvore B x Tabela Hash ----------------
 
 @app.route("/consulta")
 def consulta_cliente_destino():
@@ -283,14 +245,11 @@ def consulta_cliente_destino():
             # 1. Árvore B: cliente pelo id
             inicio = agora()
             cliente = clientes.buscar(id_cliente)
-            tempo_arvore = agora() - inicio
             registrar("busca", inicio, estatisticas_arvore)
-            busca_arvore = dict(clientes.ultima_busca)
 
             # 2. Tabela Hash: país pelo código
             inicio = agora()
             pais = paises.get(destino)
-            tempo_hash = agora() - inicio
             registrar("busca", inicio)
 
             # pacote do cliente (Árvore B de pacotes)
@@ -303,11 +262,6 @@ def consulta_cliente_destino():
                 "pais": pais,
                 "pacote": pacote,
                 "pacote_cobre": bool(pacote and pais and pais["regiao"] in pacote["regioes"]),
-                "tempo_arvore": tempo_arvore,
-                "tempo_hash": tempo_hash,
-                "busca_arvore": busca_arvore,
-                "altura": clientes.altura(),
-                "total_clientes": clientes.tamanho(),
             }
 
     return render_template(
@@ -319,8 +273,6 @@ def consulta_cliente_destino():
         paises=sorted(paises.values(), key=lambda pais: pais["pais"])
         )
 
-
-# ---------------- Pacotes (Árvore B) ----------------
 
 def ler_pacote_do_form():
     regioes = request.form.get("regioes", "").replace(";", ",").split(",")
@@ -342,10 +294,7 @@ def pagina_pacotes():
     return render_template(
         "pacotes.html",
         pacotes=lista,
-        regioes=sorted({pais["regiao"] for pais in paises.values()}),
-        niveis=pacotes.niveis(),
-        resumo=pacotes.resumo(),
-        altura=pacotes.altura()
+        regioes=sorted({pais["regiao"] for pais in paises.values()})
         )
 
 @app.route("/pacotes/cadastrar", methods = ["POST"])
@@ -354,7 +303,7 @@ def cadastrar_pacote():
 
     if not pacote["codigo"] or not pacote["nome"]:
         return "Código e nome são obrigatórios", 400
-    if pacotes.pesquisar(pacote["codigo"]) is not None:
+    if pacotes.buscar(pacote["codigo"]) is not None:
         return "Esse pacote já foi cadastrado", 400
 
     inicio = agora()
@@ -366,7 +315,7 @@ def cadastrar_pacote():
 
 @app.route("/pacotes/atualizar/<codigo>", methods = ["GET", "POST"])
 def atualizar_pacote(codigo):
-    pacote_atual = pacotes.pesquisar(codigo)
+    pacote_atual = pacotes.buscar(codigo)
     if pacote_atual is None:
         return "Pacote não encontrado", 404
 
@@ -377,30 +326,13 @@ def atualizar_pacote(codigo):
             return "O nome é obrigatório", 400
 
         inicio = agora()
-        pacotes.alterar(codigo, pacote)
+        pacotes.atualizar(codigo, pacote)
         registrar("alteracao", inicio, estatisticas_arvore)
         salvar_pacotes(pacotes)
 
         return redirect("/pacotes")
 
     return render_template("pacote_atualizar.html", pacote=pacote_atual)
-
-@app.route("/pacotes/deletar/<codigo>", methods = ["POST"])
-def deletar_pacote(codigo):
-    if pacotes.pesquisar(codigo) is None:
-        return "Pacote não encontrado", 404
-
-    # não deixa remover um pacote que ainda está com algum cliente
-    for cliente in clientes.listar():
-        if cliente.get("pacote") == codigo:
-            return "O pacote " + codigo + " ainda está vinculado a clientes", 400
-
-    inicio = agora()
-    pacotes.remover(codigo)
-    registrar("remocao", inicio, estatisticas_arvore)
-    salvar_pacotes(pacotes)
-
-    return redirect("/pacotes")
 
 @app.route("/roteiro", methods = ["GET", "POST"])
 def planejar_viagem():

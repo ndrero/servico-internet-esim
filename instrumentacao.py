@@ -14,7 +14,6 @@ estatisticas_arvore = {
     "insercao": {"quantidade": 0, "tempo_total_ns": 0},
     "busca": {"quantidade": 0, "tempo_total_ns": 0},
     "alteracao": {"quantidade": 0, "tempo_total_ns": 0},
-    "remocao": {"quantidade": 0, "tempo_total_ns": 0},
     "listagem": {"quantidade": 0, "tempo_total_ns": 0},
 }
 
