@@ -10,7 +10,7 @@
 class Pagina:
     def __init__(self):
         self.chaves = []     # chaves em ordem crescente
-        self.elementos = []  # dado de cada chave (ex.: o cliente)
+        self.elementos = []  # elemento de cada chave: o id da linha no DataFrame
         self.filhos = []     # vazio se a página for folha
 
     def eh_folha(self):

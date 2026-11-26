@@ -27,7 +27,7 @@ python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
 # instalar dependências
-pip install flask
+pip install flask pandas
 
 # (opcional) gerar os ~1.000 clientes de teste em clientes.json
 python gerar_clientes.py
@@ -47,9 +47,9 @@ servico-internet-esim/
 ├── instrumentacao.py    # medição de tempo das operações
 ├── estruturas/
 │   └── arvore_b.py      # implementação da Árvore B
-├── clientes.py          # clientes na Árvore B (chave: id)
+├── clientes.py          # índice Árvore B (cpf -> id) + DataFrame dos clientes
 ├── gerar_clientes.py    # gera ~1.000 clientes fictícios
-├── pacotes.py           # pacotes na Árvore B (chave: código do pacote)
+├── pacotes.py           # índice Árvore B (código -> id) + DataFrame dos pacotes
 ├── roteiro.py           # diferencial: relatório da viagem
 ├── paises.json          # países cadastrados (persistência)
 ├── clientes.json        # clientes cadastrados (persistência)
@@ -102,7 +102,14 @@ O módulo `instrumentacao.py` mede, com `time.perf_counter_ns()`, o tempo de cad
 
 ### Estrutura
 
-Clientes e pacotes de dados ficam em duas Árvores B (`estruturas/arvore_b.py`): os clientes indexados pelo **id** e os pacotes pelo **código** (`EUR30`, `GLB30`...). A árvore usa a definição por **ordem M** do material da disciplina: cada página guarda de M a 2M chaves (a raiz pode ter menos) e todas as folhas ficam no mesmo nível. A ordem é configurável (`ArvoreB(ordem)`); usamos M = 2. Busca, inserção, alteração e remoção custam **O(log n)**.
+Clientes e pacotes de dados são indexados por duas Árvores B (`estruturas/arvore_b.py`). A árvore funciona como **índice**: guarda só a chave e o **id** do registro, e os dados ficam num **DataFrame** do pandas carregado do JSON, que faz o papel do arquivo binário de registros.
+
+| Tabela | Chave na árvore | Elemento na árvore | Dados |
+|--------|-----------------|--------------------|-------|
+| Clientes | `cpf` | `id` do cliente (índice do DataFrame) | `clientes.json` → DataFrame indexado por `id` |
+| Pacotes | `codigo` (`EUR30`, `GLB30`...) | `id` = número da linha no DataFrame | `pacotes.json` → DataFrame (linha 0, 1, 2...) |
+
+Uma busca desce a árvore pela chave, pega o id e lê a linha no DataFrame (`df.loc[id]`). A árvore usa a definição por **ordem M** do material da disciplina: cada página guarda de M a 2M chaves (a raiz pode ter menos) e todas as folhas ficam no mesmo nível. A ordem é configurável (`ArvoreB(ordem)`); usamos M = 2. Busca, inserção, alteração e remoção custam **O(log n)**.
 
 | Método | O que faz |
 |--------|-----------|
@@ -141,17 +148,17 @@ Cliente (campos do enunciado + extras):
 
 ### Persistência
 
-Ao iniciar, `clientes.json` e `pacotes.json` são carregados nas árvores. Toda busca passa pela árvore. Depois de cada alteração, a árvore é percorrida em ordem e gravada de volta no arquivo.
+Ao iniciar, `clientes.json` e `pacotes.json` são carregados em DataFrames e cada registro gera uma entrada (chave → id) na sua árvore. Toda busca passa pela árvore; inserção e alteração escrevem no DataFrame, que é gravado de volta no JSON. Um cliente novo recebe o próximo id da tabela; um pacote novo vai para o fim do DataFrame e seu id é a nova posição.
 
 ### Funcionalidades
 
 | Rota | Método | Função |
 |------|--------|--------|
-| `/clientes` | GET | Lista os clientes em ordem, 50 por página (`?pagina=`); busca por id (`?id=`) mostrando o caminho percorrido na árvore; filtra por faixa (`?filtro=menores\|maiores&referencia=`) |
-| `/clientes/cadastrar` | POST | Insere um cliente (rejeita id ou eSIM repetido; eSIM em branco gera um novo) |
-| `/clientes/atualizar/<id>` | GET / POST | Altera os dados de um cliente, incluindo eSIM, pacote e status (o id não muda) |
+| `/clientes` | GET | Lista os clientes em ordem, 50 por página (`?pagina=`); busca por CPF (`?cpf=`) mostrando o caminho percorrido na árvore; filtra por faixa (`?filtro=menores\|maiores&referencia=`) |
+| `/clientes/cadastrar` | POST | Insere um cliente (rejeita CPF ou eSIM repetido; eSIM em branco gera um novo; o id é gerado) |
+| `/clientes/atualizar/<cpf>` | GET / POST | Altera os dados de um cliente, incluindo eSIM, pacote e status (CPF e id não mudam) |
 | `/clientes/deletar/<id>` | POST | Remove um cliente |
-| `/consulta?id=&destino=` | GET | Consulta integrada: cliente na Árvore B × país na Tabela Hash |
+| `/consulta?cpf=&destino=` | GET | Consulta integrada: cliente na Árvore B × país na Tabela Hash |
 | `/pacotes` | GET | Lista os pacotes e desenha as páginas da árvore |
 | `/pacotes/cadastrar` | POST | Insere um pacote (rejeita código duplicado) |
 | `/pacotes/atualizar/<codigo>` | GET / POST | Altera os dados de um pacote |
@@ -159,9 +166,9 @@ Ao iniciar, `clientes.json` e `pacotes.json` são carregados nas árvores. Toda 
 
 ### Integração Árvore B × Tabela Hash
 
-A página `/consulta` (menu **Consulta**) recebe o id do cliente e o código do destino e faz duas buscas:
+A página `/consulta` (menu **Consulta**) recebe o CPF do cliente e o código do destino e faz duas buscas:
 
-1. `clientes.buscar(id)` na Árvore B: nome, eSIM, status e pacote;
+1. `clientes.buscar(cpf)` na Árvore B (acha o id) e no DataFrame: nome, eSIM, status e pacote;
 2. `paises.get(codigo)` na Tabela Hash: país, região, operadora e tecnologia.
 
 O resultado mostra as duas respostas juntas, a instrumentação de cada busca (páginas visitadas, comparações e caminho na árvore; tempo das duas) e se o pacote do cliente cobre a região do destino.
@@ -170,7 +177,7 @@ O resultado mostra as duas respostas juntas, a instrumentação de cada busca (p
 
 Cada árvore conta: altura, número de páginas (nós), ocupação média, splits, junções e empréstimos (da remoção), e páginas visitadas e comparações por busca. Os tempos das operações são medidos como na Etapa 1, numa tabela separada (`estatisticas_arvore` em `instrumentacao.py`). Tudo aparece em `/clientes` e `/estatisticas`.
 
-Uma observação que dá para ver na instrumentação: como o `clientes.json` está ordenado por id, a carga insere as chaves em ordem crescente. Cada split deixa a página da esquerda com só M chaves, que nunca mais recebe inserções. Com isso a ocupação média fica perto do mínimo (cerca de 2 chaves por página com M = 2) e a árvore fica com altura 6 para 1.000 clientes.
+Uma observação que dá para ver na instrumentação: o `clientes.json` está ordenado por id, mas a chave da árvore é o CPF, que nessa ordem aparece embaralhado. Por isso a carga não insere as chaves em ordem crescente e as páginas ficam mais cheias (cerca de 2,7 chaves por página com M = 2), com altura 5 para 1.000 clientes.
 
 ## Diferencial: Planejamento de viagens com múltiplos destinos
 
@@ -182,9 +189,9 @@ O cliente cadastra um roteiro com vários países, na ordem em que serão visita
 
 ### Como está implementado
 
-A página `/roteiro` (menu **Viagem**) recebe o id do cliente e os destinos na ordem da viagem (ex.: `BR, PT, FR, IT`). A função `gerar_relatorio` do arquivo `roteiro.py` faz:
+A página `/roteiro` (menu **Viagem**) recebe o CPF do cliente e os destinos na ordem da viagem (ex.: `BR, PT, FR, IT`). A função `gerar_relatorio` do arquivo `roteiro.py` faz:
 
-1. busca o cliente na Árvore B de clientes pelo id;
+1. busca o cliente na Árvore B de clientes pelo CPF;
 2. consulta cada destino na Tabela Hash de países; o que não estiver na tabela aparece como **sem cobertura**;
 3. busca o pacote do cliente na Árvore B de pacotes e compara as regiões do pacote com as regiões do roteiro;
 4. se faltar alguma região, percorre os pacotes em ordem e recomenda o mais barato que cubra todas.
@@ -193,7 +200,8 @@ A página `/roteiro` (menu **Viagem**) recebe o id do cliente e os destinos na o
 
 - **Tabela Hash**: implementada com o `dict` do Python (aceito pela professora na Etapa 1).
 - **Árvore B**: definida pela ordem M do material da disciplina (M a 2M chaves por página), com M = 2 para que as divisões apareçam com poucos registros. A remoção, opcional no enunciado, foi implementada.
-- **Chave dos clientes**: `id` numérico, como no enunciado. CPF, telefone e país de origem ficam como campos extras.
-- **Pacotes**: também guardados numa Árvore B, indexados pelo código (o enunciado permite deixá-los em lista).
+- **Árvore B como índice**: os elementos da árvore são só ids; os registros ficam num DataFrame do pandas carregado do JSON, no lugar de um arquivo binário.
+- **Chave dos clientes**: o CPF. O `id` numérico do enunciado continua existindo como índice da linha no DataFrame.
+- **Pacotes**: também indexados numa Árvore B pelo código; o id é a posição da linha no DataFrame (o enunciado permite deixá-los em lista).
 - **Origem da rota (Etapa 3)**: será o campo `pais_origem` do cliente.
 

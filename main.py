@@ -1,15 +1,15 @@
 from flask import Flask, render_template, redirect, request
 from json_handler import json_read, json_write
 from instrumentacao import agora, registrar, estatisticas, estatisticas_arvore
-from clientes import carregar_clientes, salvar_clientes, esims_em_uso, novo_esim, CAMPOS_CLIENTE, STATUS_CLIENTE
-from pacotes import carregar_pacotes, salvar_pacotes
+from clientes import Clientes, novo_esim, limpar_cpf, CAMPOS_CLIENTE, STATUS_CLIENTE
+from pacotes import Pacotes
 from roteiro import ler_destinos, gerar_relatorio
 
 app = Flask(__name__)
 
 paises = json_read("paises.json")
-clientes = carregar_clientes()
-pacotes = carregar_pacotes()
+clientes = Clientes()  # Árvore B (cpf -> id) + DataFrame do clientes.json
+pacotes = Pacotes()    # Árvore B (codigo -> id) + DataFrame do pacotes.json
 
 @app.route("/")
 def home():
@@ -128,10 +128,15 @@ def pagina_estatisticas():
 
 POR_PAGINA = 50
 
-def ler_id(texto):
-    # o id é a chave da árvore e é numérico; devolve None se não for número
+def ler_numero(texto):
+    # devolve o número ou None se não for número (usado na paginação)
     texto = (texto or "").strip()
     return int(texto) if texto.isdigit() else None
+
+def ler_cpf(texto):
+    # o cpf é a chave da árvore de clientes; devolve None se não tiver 11 dígitos
+    cpf = limpar_cpf(texto)
+    return cpf if len(cpf) == 11 else None
 
 def ler_cliente_do_form():
     cliente = {campo: request.form.get(campo, "").strip() for campo in CAMPOS_CLIENTE}
@@ -140,25 +145,18 @@ def ler_cliente_do_form():
         cliente["status"] = "ativo"
     return cliente
 
-def esim_repetido(esim, id_cliente):
-    # um eSIM só pode estar com um cliente
-    for cliente in clientes.listar():
-        if cliente.get("esim") == esim and cliente["id"] != id_cliente:
-            return True
-    return False
-
 @app.route("/clientes")
 def pagina_clientes():
-    texto_id = request.args.get("id", "").strip()
-    pagina = max(ler_id(request.args.get("pagina")) or 1, 1)
+    texto_cpf = request.args.get("cpf", "").strip()
+    pagina = max(ler_numero(request.args.get("pagina")) or 1, 1)
 
     encontrado = None
     busca = None
-    if texto_id:
-        id_cliente = ler_id(texto_id)
-        if id_cliente is not None:
+    if texto_cpf:
+        cpf = ler_cpf(texto_cpf)
+        if cpf is not None:
             inicio = agora()
-            encontrado = clientes.buscar(id_cliente)
+            encontrado = clientes.buscar(cpf)
             registrar("busca", inicio, estatisticas_arvore)
             busca = clientes.ultima_busca
 
@@ -177,7 +175,7 @@ def pagina_clientes():
         total=total,
         pagina=pagina,
         total_paginas=total_paginas,
-        id_busca=texto_id,
+        cpf_busca=texto_cpf,
         encontrado=encontrado,
         busca=busca,
         pacotes=pacotes.listar(),
@@ -190,47 +188,49 @@ def pagina_clientes():
 @app.route("/clientes/cadastrar", methods = ["POST"])
 def cadastrar_cliente():
     cliente = ler_cliente_do_form()
-    cliente["id"] = ler_id(cliente["id"])
+    cliente["cpf"] = ler_cpf(cliente["cpf"])
 
-    if cliente["id"] is None or not cliente["nome"]:
-        return "Id (numérico) e nome são obrigatórios", 400
-    if clientes.buscar(cliente["id"]) is not None:
-        return "Já existe um cliente com esse id", 400
+    if cliente["cpf"] is None or not cliente["nome"]:
+        return "CPF (11 dígitos) e nome são obrigatórios", 400
+    if clientes.buscar(cliente["cpf"]) is not None:
+        return "Já existe um cliente com esse CPF", 400
 
     if not cliente["esim"]:
-        cliente["esim"] = novo_esim(esims_em_uso(clientes))
-    elif esim_repetido(cliente["esim"], cliente["id"]):
+        cliente["esim"] = novo_esim(clientes.esims_em_uso())
+    elif clientes.esim_repetido(cliente["esim"], cliente["cpf"]):
         return "Esse eSIM já está associado a outro cliente", 400
 
+    # o id é gerado pela tabela (próxima linha do DataFrame)
     inicio = agora()
-    clientes.inserir(cliente["id"], cliente)
+    clientes.inserir(cliente)
     registrar("insercao", inicio, estatisticas_arvore)
-    salvar_clientes(clientes)
+    clientes.salvar()
 
-    return redirect("/clientes?id=" + str(cliente["id"]))
+    return redirect("/clientes?cpf=" + cliente["cpf"])
 
-@app.route("/clientes/atualizar/<int:id_cliente>", methods = ["GET", "POST"])
-def atualizar_cliente(id_cliente):
-    cliente_atual = clientes.buscar(id_cliente)
+@app.route("/clientes/atualizar/<cpf>", methods = ["GET", "POST"])
+def atualizar_cliente(cpf):
+    cliente_atual = clientes.buscar(cpf)
     if cliente_atual is None:
         return "Cliente não encontrado", 404
+    cpf = cliente_atual["cpf"]
 
     if request.method == "POST":
         cliente = ler_cliente_do_form()
-        cliente["id"] = id_cliente  # o id é a chave da árvore e não muda
+        cliente["cpf"] = cpf  # o cpf é a chave da árvore e não muda
         if not cliente["nome"]:
             return "O nome é obrigatório", 400
         if not cliente["esim"]:
-            cliente["esim"] = novo_esim(esims_em_uso(clientes))
-        elif esim_repetido(cliente["esim"], id_cliente):
+            cliente["esim"] = novo_esim(clientes.esims_em_uso())
+        elif clientes.esim_repetido(cliente["esim"], cpf):
             return "Esse eSIM já está associado a outro cliente", 400
 
         inicio = agora()
-        clientes.atualizar(id_cliente, cliente)
+        clientes.atualizar(cpf, cliente)
         registrar("alteracao", inicio, estatisticas_arvore)
-        salvar_clientes(clientes)
+        clientes.salvar()
 
-        return redirect("/clientes?id=" + str(id_cliente))
+        return redirect("/clientes?cpf=" + cpf)
 
     return render_template(
         "cliente_atualizar.html",
@@ -244,19 +244,19 @@ def atualizar_cliente(id_cliente):
 
 @app.route("/consulta")
 def consulta_cliente_destino():
-    texto_id = request.args.get("id", "").strip()
+    texto_cpf = request.args.get("cpf", "").strip()
     destino = request.args.get("destino", "").strip().upper()
     resultado = None
     erro = None
 
-    if texto_id or destino:
-        id_cliente = ler_id(texto_id)
-        if id_cliente is None or not destino:
-            erro = "Informe o id do cliente (número) e o código do destino."
+    if texto_cpf or destino:
+        cpf = ler_cpf(texto_cpf)
+        if cpf is None or not destino:
+            erro = "Informe o CPF do cliente (11 dígitos) e o código do destino."
         else:
-            # 1. Árvore B: cliente pelo id
+            # 1. Árvore B: id do cliente pelo cpf, depois a linha no DataFrame
             inicio = agora()
-            cliente = clientes.buscar(id_cliente)
+            cliente = clientes.buscar(cpf)
             tempo_arvore = agora() - inicio
             registrar("busca", inicio, estatisticas_arvore)
             busca_arvore = dict(clientes.ultima_busca)
@@ -286,7 +286,7 @@ def consulta_cliente_destino():
 
     return render_template(
         "consulta.html",
-        id_busca=texto_id,
+        cpf_busca=texto_cpf,
         destino=destino,
         resultado=resultado,
         erro=erro,
@@ -330,9 +330,9 @@ def cadastrar_pacote():
         return "Esse pacote já foi cadastrado", 400
 
     inicio = agora()
-    pacotes.inserir(pacote["codigo"], pacote)
+    pacotes.inserir(pacote)
     registrar("insercao", inicio, estatisticas_arvore)
-    salvar_pacotes(pacotes)
+    pacotes.salvar()
 
     return redirect("/pacotes")
 
@@ -351,7 +351,7 @@ def atualizar_pacote(codigo):
         inicio = agora()
         pacotes.atualizar(codigo, pacote)
         registrar("alteracao", inicio, estatisticas_arvore)
-        salvar_pacotes(pacotes)
+        pacotes.salvar()
 
         return redirect("/pacotes")
 
@@ -359,20 +359,20 @@ def atualizar_pacote(codigo):
 
 @app.route("/roteiro", methods = ["GET", "POST"])
 def planejar_viagem():
-    texto_id = ""
+    texto_cpf = ""
     texto_destinos = ""
     relatorio = None
     erro = None
 
     if request.method == "POST":
-        texto_id = request.form.get("id", "").strip()
+        texto_cpf = request.form.get("cpf", "").strip()
         texto_destinos = request.form.get("destinos", "").strip()
         codigos = ler_destinos(texto_destinos)
 
-        id_cliente = ler_id(texto_id)
-        cliente = clientes.buscar(id_cliente) if id_cliente is not None else None
+        cpf = ler_cpf(texto_cpf)
+        cliente = clientes.buscar(cpf) if cpf is not None else None
         if cliente is None:
-            erro = "Nenhum cliente com id " + texto_id + "."
+            erro = "Nenhum cliente com CPF " + texto_cpf + "."
         elif len(codigos) == 0:
             erro = "Informe pelo menos um destino."
         else:
@@ -380,7 +380,7 @@ def planejar_viagem():
 
     return render_template(
         "roteiro.html",
-        id_cliente=texto_id,
+        cpf_cliente=texto_cpf,
         destinos=texto_destinos,
         relatorio=relatorio,
         erro=erro

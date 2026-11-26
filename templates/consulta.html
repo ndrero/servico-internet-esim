@@ -93,12 +93,12 @@ details summary{cursor:pointer;margin:4px 0}
     </div>
     <div class="window-body has-space">
       <div class="head"><svg class="i" width="44" height="44" aria-hidden="true"><use href="#ic-doc"/></svg><h1>Consulta cliente × destino</h1></div>
-      <p>Busca o cliente na <b>Árvore B</b> (pelo id) e o país de destino na <b>Tabela Hash</b> (pelo código), e mostra as duas respostas juntas.</p>
+      <p>Busca o cliente na <b>Árvore B</b> (pelo CPF, que leva ao id da linha no DataFrame) e o país de destino na <b>Tabela Hash</b> (pelo código), e mostra as duas respostas juntas.</p>
 
       <form action="/consulta" method="get">
         <fieldset>
           <legend>Consulta</legend>
-          <div class="row"><label for="id">Cliente:</label><input type="text" id="id" name="id" value="{{ id_busca }}" placeholder="Id do cliente (ex.: 10028)" required></div>
+          <div class="row"><label for="cpf">Cliente:</label><input type="text" id="cpf" name="cpf" value="{{ cpf_busca }}" placeholder="CPF do cliente (ex.: 15046340133)" required></div>
           <div class="row"><label for="destino">Destino:</label>
             <input type="text" id="destino" name="destino" value="{{ destino }}" list="lista-paises" placeholder="Código do país (ex.: IT)" required>
             <datalist id="lista-paises">{% for pais in paises %}<option value="{{ pais['codigo'] }}">{{ pais['pais'] }}</option>{% endfor %}</datalist>
@@ -123,7 +123,7 @@ details summary{cursor:pointer;margin:4px 0}
           <p>Sem pacote contratado.</p>
           {% endif %}
         {% else %}
-          <p class="resultado falta">Nenhum cliente com id {{ id_busca }}.</p>
+          <p class="resultado falta">Nenhum cliente com CPF {{ cpf_busca }}.</p>
         {% endif %}
         <p class="legenda" style="text-align:left">
           {{ resultado["busca_arvore"]["paginas_visitadas"] }} página(s) visitada(s) numa árvore de altura {{ resultado["altura"] }} com {{ resultado["total_clientes"] }} clientes •
