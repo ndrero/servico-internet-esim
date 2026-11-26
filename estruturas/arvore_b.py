@@ -34,32 +34,30 @@ class ArvoreB:
 
     # ---------------- Busca e alteração ----------------
 
-    def _achar(self, chave):
-        # desce da raiz até achar a chave; devolve a página, a posição e o caminho
+    def buscar(self, chave, novo_elemento=None):
+        # desce da raiz até achar a chave ou chegar numa folha, guardando o caminho;
+        # se receber novo_elemento, troca o dado da chave encontrada (usado no atualizar)
         caminho = []
         pagina = self.raiz
         while True:
             caminho.append(list(pagina.chaves))
             i = self._posicao(pagina, chave)
             if i < len(pagina.chaves) and pagina.chaves[i] == chave:
-                return pagina, i, caminho
+                break
             if pagina.eh_folha():
-                return None, None, caminho
+                pagina = None
+                break
             pagina = pagina.filhos[i]
 
-    def buscar(self, chave):
-        pagina, i, caminho = self._achar(chave)
         self.ultima_busca = {"paginas_visitadas": len(caminho), "caminho": caminho}
         if pagina is None:
             return None
+        if novo_elemento is not None:
+            pagina.elementos[i] = novo_elemento
         return pagina.elementos[i]
 
     def atualizar(self, chave, elemento):
-        pagina, i, _ = self._achar(chave)
-        if pagina is None:
-            return False
-        pagina.elementos[i] = elemento
-        return True
+        return self.buscar(chave, elemento) is not None
 
     # ---------------- Inserção ----------------
 
