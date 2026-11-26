@@ -26,7 +26,7 @@ def gerar_relatorio(cliente, codigos, paises, pacotes):
     # pacote atual do cliente (busca na Árvore B de pacotes)
     pacote_atual = None
     if cliente.get("pacote"):
-        pacote_atual = pacotes.pesquisar(cliente["pacote"])
+        pacote_atual = pacotes.buscar(cliente["pacote"])
 
     # consulta cada destino na Tabela Hash
     for codigo in codigos:

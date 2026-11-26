@@ -36,11 +36,6 @@ td:last-child form{display:inline}
 .busca input{flex:1}
 .resultado{margin:10px 0 0}
 .busca select{width:auto}
-.arvore{display:flex;flex-direction:column;gap:14px;align-items:center;padding:12px 4px;overflow-x:auto}
-.nivel{display:flex;gap:10px;justify-content:center}
-.pagina{display:flex;border:1px solid #5b86b5;border-radius:3px;background:linear-gradient(to bottom,#fff,#d9ebfb);font-family:Consolas,monospace;font-size:11px}
-.pagina span{padding:4px 6px}
-.pagina span+span{border-left:1px solid #9bbbe0}
 .legenda{margin:6px 0 0;color:#555;font-size:11px;text-align:center}
 .paginacao{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap}
 .metricas{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 12px}
@@ -146,27 +141,11 @@ details summary{cursor:pointer;margin:4px 0}
             </p>
             {% if busca %}
             <p class="legenda" style="text-align:left">
-              Busca: {{ busca["paginas_visitadas"] }} página(s) visitada(s) de {{ resumo["altura"] }} nível(is), {{ busca["comparacoes"] }} comparação(ões) de chave.
+              Busca: {{ busca["paginas_visitadas"] }} página(s) visitada(s) de {{ resumo["altura"] }} nível(is).
               Caminho: {% for chaves in busca["caminho"] %}[{{ chaves|join(" ") }}]{% if not loop.last %} → {% endif %}{% endfor %}
             </p>
             {% endif %}
           {% endif %}
-        </fieldset>
-      </form>
-
-      <form action="/clientes" method="get" style="margin-top:12px">
-        <fieldset>
-          <legend>Filtrar por faixa de id</legend>
-          <div class="busca">
-            <label for="filtro">Id</label>
-            <select id="filtro" name="filtro">
-              <option value="menores" {% if filtro == "menores" %}selected{% endif %}>menor que</option>
-              <option value="maiores" {% if filtro == "maiores" %}selected{% endif %}>maior que</option>
-            </select>
-            <input type="text" name="referencia" value="{{ referencia }}" placeholder="Id de referência">
-            <button type="submit">Filtrar</button>
-            {% if filtro %}<button type="button" onclick="location.href='/clientes'">Limpar</button>{% endif %}
-          </div>
         </fieldset>
       </form>
 
@@ -188,61 +167,38 @@ details summary{cursor:pointer;margin:4px 0}
                 <form action="/clientes/atualizar/{{ cliente['id'] }}" method="get">
                   <button type="submit">Atualizar</button>
                 </form>
-                <form action="/clientes/deletar/{{ cliente['id'] }}" method="post" onsubmit="return confirm('Tem certeza que deseja excluir?');">
-                  <button type="submit">Deletar</button>
-                </form>
               </td>
             </tr>
           {% else %}
-            <tr class="empty"><td colspan="7">{% if filtro %}Nenhum cliente nessa faixa.{% else %}Nenhum cliente cadastrado.{% endif %}</td></tr>
+            <tr class="empty"><td colspan="7">Nenhum cliente cadastrado.</td></tr>
           {% endfor %}
           </tbody>
         </table>
       </div>
 
-      {% set extra = ("&filtro=" ~ filtro ~ "&referencia=" ~ referencia) if filtro else "" %}
       <div class="paginacao">
-        <button type="button" {% if pagina <= 1 %}disabled{% endif %} onclick="location.href='/clientes?pagina=1{{ extra }}'">« Primeira</button>
-        <button type="button" {% if pagina <= 1 %}disabled{% endif %} onclick="location.href='/clientes?pagina={{ pagina - 1 }}{{ extra }}'">‹ Anterior</button>
+        <button type="button" {% if pagina <= 1 %}disabled{% endif %} onclick="location.href='/clientes?pagina=1'">« Primeira</button>
+        <button type="button" {% if pagina <= 1 %}disabled{% endif %} onclick="location.href='/clientes?pagina={{ pagina - 1 }}'">‹ Anterior</button>
         <span>Página {{ pagina }} de {{ total_paginas }}</span>
-        <button type="button" {% if pagina >= total_paginas %}disabled{% endif %} onclick="location.href='/clientes?pagina={{ pagina + 1 }}{{ extra }}'">Próxima ›</button>
-        <button type="button" {% if pagina >= total_paginas %}disabled{% endif %} onclick="location.href='/clientes?pagina={{ total_paginas }}{{ extra }}'">Última »</button>
+        <button type="button" {% if pagina >= total_paginas %}disabled{% endif %} onclick="location.href='/clientes?pagina={{ pagina + 1 }}'">Próxima ›</button>
+        <button type="button" {% if pagina >= total_paginas %}disabled{% endif %} onclick="location.href='/clientes?pagina={{ total_paginas }}'">Última »</button>
       </div>
 
       <fieldset style="margin-top:12px">
         <legend>Instrumentação da Árvore B (chave: id)</legend>
         <div class="metricas">
-          <span>Ordem <b>{{ resumo["ordem"] }}</b> ({{ resumo["chaves_por_pagina"] }} chaves/página)</span>
+          <span>Ordem <b>{{ resumo["ordem"] }}</b> ({{ resumo["ordem"] }} a {{ 2 * resumo["ordem"] }} chaves/página)</span>
           <span>Registros <b>{{ resumo["registros"] }}</b></span>
           <span>Altura <b>{{ resumo["altura"] }}</b></span>
           <span>Páginas <b>{{ resumo["paginas"] }}</b></span>
           <span>Ocupação média <b>{{ resumo["ocupacao_media"] }}</b> chaves/página</span>
           <span>Splits <b>{{ resumo["splits"] }}</b></span>
-          <span>Junções <b>{{ resumo["juncoes"] }}</b></span>
-          <span>Empréstimos <b>{{ resumo["emprestimos"] }}</b></span>
-          <span>Buscas <b>{{ resumo["buscas"] }}</b></span>
-          <span>Média de páginas por busca <b>{{ resumo["media_paginas_por_busca"] }}</b></span>
-          <span>Média de comparações por busca <b>{{ resumo["media_comparacoes_por_busca"] }}</b></span>
         </div>
         <p class="legenda">Os splits contam desde que o servidor iniciou, incluindo a carga do clientes.json.</p>
-        {% if niveis %}
-        <div class="arvore">
-          {% for nivel in niveis %}
-          <div class="nivel">
-            {% for pagina in nivel %}
-            <div class="pagina">{% for chave in pagina %}<span>{{ chave }}</span>{% endfor %}</div>
-            {% endfor %}
-          </div>
-          {% endfor %}
-        </div>
-        <p class="legenda">Cada caixa é uma página; cada linha é um nível, da raiz até as folhas.</p>
-        {% elif resumo["paginas"] %}
-        <p class="legenda">Com {{ resumo["paginas"] }} páginas o desenho da árvore fica ilegível, então ele só aparece com até 40 páginas.</p>
-        {% endif %}
       </fieldset>
     </div>
     <div class="status-bar">
-      <p class="status-bar-field">{{ total }} cliente(s){% if filtro %} na faixa{% endif %} • altura da árvore: {{ altura }}</p>
+      <p class="status-bar-field">{{ total }} cliente(s) • altura da árvore: {{ altura }}</p>
       <p class="status-bar-field">Etapa 2 — Árvore B (ordenado por id)</p>
     </div>
   </div>

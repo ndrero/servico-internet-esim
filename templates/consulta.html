@@ -127,7 +127,7 @@ details summary{cursor:pointer;margin:4px 0}
         {% endif %}
         <p class="legenda" style="text-align:left">
           {{ resultado["busca_arvore"]["paginas_visitadas"] }} página(s) visitada(s) numa árvore de altura {{ resultado["altura"] }} com {{ resultado["total_clientes"] }} clientes •
-          {{ resultado["busca_arvore"]["comparacoes"] }} comparação(ões) • {{ resultado["tempo_arvore"] }} ns<br>
+          {{ resultado["tempo_arvore"] }} ns<br>
           Caminho: {% for chaves in resultado["busca_arvore"]["caminho"] %}[{{ chaves|join(" ") }}]{% if not loop.last %} → {% endif %}{% endfor %}
         </p>
       </fieldset>

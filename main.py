@@ -150,8 +150,6 @@ def esim_repetido(esim, id_cliente):
 @app.route("/clientes")
 def pagina_clientes():
     texto_id = request.args.get("id", "").strip()
-    filtro = request.args.get("filtro", "")
-    referencia = request.args.get("referencia", "").strip()
     pagina = max(ler_id(request.args.get("pagina")) or 1, 1)
 
     encontrado = None
@@ -165,18 +163,9 @@ def pagina_clientes():
             busca = clientes.ultima_busca
 
     inicio = agora()
-    id_referencia = ler_id(referencia)
-    if filtro in ("menores", "maiores") and id_referencia is not None:
-        if filtro == "menores":
-            filtrados = clientes.listar_menores(id_referencia)
-        else:
-            filtrados = clientes.listar_maiores(id_referencia)
-        total = len(filtrados)
-        lista = filtrados[(pagina - 1) * POR_PAGINA : pagina * POR_PAGINA]
-    else:
-        filtro = ""
-        total = clientes.tamanho()
-        lista = clientes.listar_pagina((pagina - 1) * POR_PAGINA, POR_PAGINA)
+    todos = clientes.listar()
+    total = len(todos)
+    lista = todos[(pagina - 1) * POR_PAGINA : pagina * POR_PAGINA]
     registrar("listagem", inicio, estatisticas_arvore)
 
     total_paginas = max((total + POR_PAGINA - 1) // POR_PAGINA, 1)
@@ -191,13 +180,10 @@ def pagina_clientes():
         id_busca=texto_id,
         encontrado=encontrado,
         busca=busca,
-        filtro=filtro,
-        referencia=referencia,
         pacotes=pacotes.listar(),
         status_cliente=STATUS_CLIENTE,
         resumo=resumo,
         # o desenho das páginas só é legível com poucos registros
-        niveis=clientes.niveis() if resumo["paginas"] <= 40 else None,
         altura=resumo["altura"]
         )
 
@@ -252,18 +238,6 @@ def atualizar_cliente(id_cliente):
         pacotes=pacotes.listar(),
         status_cliente=STATUS_CLIENTE
         )
-
-@app.route("/clientes/deletar/<int:id_cliente>", methods = ["POST"])
-def deletar_cliente(id_cliente):
-    inicio = agora()
-    removeu = clientes.remover(id_cliente)
-    registrar("remocao", inicio, estatisticas_arvore)
-
-    if not removeu:
-        return "Cliente não encontrado", 404
-
-    salvar_clientes(clientes)
-    return redirect("/clientes")
 
 
 # ---------------- Consulta integrada: Árvore B x Tabela Hash ----------------
@@ -343,8 +317,6 @@ def pagina_pacotes():
         "pacotes.html",
         pacotes=lista,
         regioes=sorted({pais["regiao"] for pais in paises.values()}),
-        niveis=pacotes.niveis(),
-        resumo=pacotes.resumo(),
         altura=pacotes.altura()
         )
 
@@ -354,7 +326,7 @@ def cadastrar_pacote():
 
     if not pacote["codigo"] or not pacote["nome"]:
         return "Código e nome são obrigatórios", 400
-    if pacotes.pesquisar(pacote["codigo"]) is not None:
+    if pacotes.buscar(pacote["codigo"]) is not None:
         return "Esse pacote já foi cadastrado", 400
 
     inicio = agora()
@@ -366,7 +338,7 @@ def cadastrar_pacote():
 
 @app.route("/pacotes/atualizar/<codigo>", methods = ["GET", "POST"])
 def atualizar_pacote(codigo):
-    pacote_atual = pacotes.pesquisar(codigo)
+    pacote_atual = pacotes.buscar(codigo)
     if pacote_atual is None:
         return "Pacote não encontrado", 404
 
@@ -377,30 +349,13 @@ def atualizar_pacote(codigo):
             return "O nome é obrigatório", 400
 
         inicio = agora()
-        pacotes.alterar(codigo, pacote)
+        pacotes.atualizar(codigo, pacote)
         registrar("alteracao", inicio, estatisticas_arvore)
         salvar_pacotes(pacotes)
 
         return redirect("/pacotes")
 
     return render_template("pacote_atualizar.html", pacote=pacote_atual)
-
-@app.route("/pacotes/deletar/<codigo>", methods = ["POST"])
-def deletar_pacote(codigo):
-    if pacotes.pesquisar(codigo) is None:
-        return "Pacote não encontrado", 404
-
-    # não deixa remover um pacote que ainda está com algum cliente
-    for cliente in clientes.listar():
-        if cliente.get("pacote") == codigo:
-            return "O pacote " + codigo + " ainda está vinculado a clientes", 400
-
-    inicio = agora()
-    pacotes.remover(codigo)
-    registrar("remocao", inicio, estatisticas_arvore)
-    salvar_pacotes(pacotes)
-
-    return redirect("/pacotes")
 
 @app.route("/roteiro", methods = ["GET", "POST"])
 def planejar_viagem():

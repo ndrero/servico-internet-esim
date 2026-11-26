@@ -106,7 +106,7 @@ td:last-child form{display:inline}
             <tr><th>Métrica</th><th>Clientes</th><th>Pacotes</th></tr>
           </thead>
           <tbody>
-          {% for chave, nome in [("ordem", "Ordem"), ("chaves_por_pagina", "Chaves por página"), ("registros", "Registros"), ("altura", "Altura"), ("paginas", "Páginas (nós)"), ("ocupacao_media", "Ocupação média (chaves/página)"), ("splits", "Splits (divisões)"), ("juncoes", "Junções (remoção)"), ("emprestimos", "Empréstimos (remoção)"), ("buscas", "Buscas"), ("media_paginas_por_busca", "Média de páginas visitadas por busca"), ("media_comparacoes_por_busca", "Média de comparações por busca")] %}
+          {% for chave, nome in [("ordem", "Ordem"), ("registros", "Registros"), ("altura", "Altura"), ("paginas", "Páginas (nós)"), ("ocupacao_media", "Ocupação média (chaves/página)"), ("splits", "Splits (divisões)")] %}
             <tr><td>{{ nome }}</td><td>{{ resumo_clientes[chave] }}</td><td>{{ resumo_pacotes[chave] }}</td></tr>
           {% endfor %}
           </tbody>
